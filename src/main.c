@@ -5,23 +5,25 @@
 #include "mesh.h"
 #include "math3d.h"
 
-typedef struct eventHandler
-{
+typedef struct eventHandler {
     SDL_Event event;
     int running;
     int fullScreen;
     int r;
+    int w,a,s,d;
+    int space,ctrl;
+    float mouse_dx, mouse_dy;
 } EventH;
 
 typedef struct camera {
     Mat4x4 model, view, projection;
     Vertex eye, target, up;
     float angleX, angleY, angleZ;
-    Vertex viewVec3, pitch, yaw;
+    Vertex viewVec3, rightVec3;
+    float pitch, yaw;
 } Camera;
 
-typedef struct windowModel
-{
+typedef struct windowModel {
     SDL_Window *win;
     SDL_GLContext glContext;
     EventH *eh;
@@ -54,7 +56,7 @@ int main(int argc, char *argv[])
     WindowModel wm;
     if (!initializeWindow(&wm))
         return -1;
-    EventH eh = {.running = 1, .fullScreen = 0, .r = 0};
+    EventH eh = {.running = 1, .fullScreen = 0, .r = 0, .w = 0, .a = 0, .s = 0, .d = 0, .space = 0, .ctrl = 0};
     Camera cam = setupCamera();
     wm.eh = &eh;
     wm.cam = &cam;
@@ -64,7 +66,7 @@ int main(int argc, char *argv[])
     Mesh meshes[10];
     int meshCount = 3;
     meshes[0] = parseOBJ(OBJ_IXO_SPHERE, POS(0.0f, 0.0f, 0.0f), "red", 0.5f);
-    meshes[1] = parseOBJ(OBJ_MONKEY, POS(2.0f, 0.0f, 0.0f), "yellow", 1.0f);
+    meshes[1] = parseOBJ(OBJ_CUBE, POS(2.0f, 0.0f, 0.0f), "yellow", 1.0f);
     meshes[2] = parseOBJ("models/Helicopter.obj", POS(-2.0f, 0.0f, 0.0f), "cyan", 1.0f);
 
     loadShaders(&wm.shaderProgram);
@@ -73,6 +75,7 @@ int main(int argc, char *argv[])
     {
         getWindowEvents(&wm, &cam);
         cam.viewVec3 = subtractVec3d(cam.target, cam.eye);
+        cam.rightVec3 = crossProduct(cam.viewVec3, cam.up);
 
         glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightPos"), 6.0f, 2.0f, 6.0f);
         glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
@@ -128,8 +131,7 @@ void render(unsigned int shaderProgram, EventH *eh, Mesh *mesh, int meshCount)
 
 void getWindowEvents(WindowModel *wm, Camera *cam)
 {
-    int w=0,a=0,s=0,d=0;
-    float mouseMovX = 0.0f, mouseMovY = 0.0f;
+    wm->eh->mouse_dx = 0.0f, wm->eh->mouse_dy = 0.0f;
     while (SDL_PollEvent(&(wm->eh->event)))
     {
         switch (wm->eh->event.type)
@@ -141,12 +143,20 @@ void getWindowEvents(WindowModel *wm, Camera *cam)
         case SDL_KEYDOWN:
             if(wm->eh->event.key.keysym.sym == SDLK_F11) toggleFullscreen(wm);
             if(wm->eh->event.key.keysym.sym == SDLK_r) wm->eh->r = !wm->eh->r;
-            if(wm->eh->event.key.keysym.sym == SDLK_w) w = 1;
-            if(wm->eh->event.key.keysym.sym == SDLK_a) a = 1;
-            if(wm->eh->event.key.keysym.sym == SDLK_s) s = 1;
-            if(wm->eh->event.key.keysym.sym == SDLK_d) d = 1;
+            if(wm->eh->event.key.keysym.sym == SDLK_w) wm->eh->w = 1;
+            if(wm->eh->event.key.keysym.sym == SDLK_a) wm->eh->a = 1;
+            if(wm->eh->event.key.keysym.sym == SDLK_s) wm->eh->s = 1;
+            if(wm->eh->event.key.keysym.sym == SDLK_d) wm->eh->d = 1;
+            if(wm->eh->event.key.keysym.sym == SDLK_SPACE) wm->eh->space = 1;
+            if(wm->eh->event.key.keysym.sym == SDLK_LCTRL) wm->eh->ctrl = 1;
             break;
         case SDL_KEYUP:
+            if(wm->eh->event.key.keysym.sym == SDLK_w) wm->eh->w = 0;
+            if(wm->eh->event.key.keysym.sym == SDLK_a) wm->eh->a = 0;
+            if(wm->eh->event.key.keysym.sym == SDLK_s) wm->eh->s = 0;
+            if(wm->eh->event.key.keysym.sym == SDLK_d) wm->eh->d = 0;
+            if(wm->eh->event.key.keysym.sym == SDLK_SPACE) wm->eh->space = 0;
+            if(wm->eh->event.key.keysym.sym == SDLK_LCTRL) wm->eh->ctrl = 0;
             break;
 
         case SDL_MOUSEBUTTONDOWN:
@@ -164,32 +174,65 @@ void getWindowEvents(WindowModel *wm, Camera *cam)
             break;
 
         case SDL_MOUSEMOTION:
-            // mouseMoveX =
-            // mouseMovY =
+            wm->eh->mouse_dx = wm->eh->event.motion.xrel;
+            wm->eh->mouse_dy = wm->eh->event.motion.yrel;
             break;
         }
     }
 
-    if(w) {
-        cam->eye.x += cam->viewVec3.x * 0.01f;
-        cam->eye.z += cam->viewVec3.z * 0.01f;
+    float speed = 0.1f;
+
+    if(wm->eh->w) {
+        cam->eye.x += cam->viewVec3.x * speed;
+        cam->eye.z += cam->viewVec3.z * speed;
+        cam->target.x += cam->viewVec3.x * speed;
+        cam->target.z += cam->viewVec3.z * speed;
     }
-    if(a) {
-        cam->eye.x += cam->viewVec3.z * 0.01f;
-        cam->eye.z += cam->viewVec3.x * 0.01f;
-        cam->target.x += cam->viewVec3.z * 0.01f;
-        cam->target.z += cam->viewVec3.x * 0.01f;
+    if(wm->eh->a) {
+        cam->eye.x -= cam->rightVec3.x * speed;
+        cam->eye.z -= cam->rightVec3.z * speed;
+        cam->target.x -= cam->rightVec3.x * speed;
+        cam->target.z -= cam->rightVec3.z * speed;
     }
-    if(s) {
-        cam->eye.x -= cam->viewVec3.x * 0.01f;
-        cam->eye.z -= cam->viewVec3.z * 0.01f;
+    if(wm->eh->s) {
+        cam->eye.x -= cam->viewVec3.x * speed;
+        cam->eye.z -= cam->viewVec3.z * speed;
+        cam->target.x -= cam->viewVec3.x * speed;
+        cam->target.z -= cam->viewVec3.z * speed;
     }
-    if(d) {
-        cam->eye.x -= cam->viewVec3.z * 0.01f;
-        cam->eye.z -= cam->viewVec3.x * 0.01f;
-        cam->target.x -= cam->viewVec3.z * 0.01f;
-        cam->target.z -= cam->viewVec3.x * 0.01f;
+    if(wm->eh->d) {
+        cam->eye.x += cam->rightVec3.x * speed;
+        cam->eye.z += cam->rightVec3.z * speed;
+        cam->target.x += cam->rightVec3.x * speed;
+        cam->target.z += cam->rightVec3.z * speed;
     }
+    if(wm->eh->ctrl) {
+        cam->eye.x -= cam->up.x * speed;
+        cam->eye.y -= cam->up.y * speed;
+        cam->eye.z -= cam->up.z * speed;
+        cam->target.x -= cam->up.x * speed;
+        cam->target.y -= cam->up.y * speed;
+        cam->target.z -= cam->up.z * speed;
+    }
+    if(wm->eh->space) {
+        cam->eye.x += cam->up.x * speed;
+        cam->eye.y += cam->up.y * speed;
+        cam->eye.z += cam->up.z * speed;
+        cam->target.x += cam->up.x * speed;
+        cam->target.y += cam->up.y * speed;
+        cam->target.z += cam->up.z * speed;
+    }
+
+    cam->yaw += wm->eh->mouse_dx * sensitivity;
+    cam->pitch -= wm->eh->mouse_dy * sensitivity;
+    Vertex direction;
+    direction.x = cosf(cam->yaw) * cosf(cam->pitch);
+    direction.y = sinf(cam->pitch);
+    direction.z = sinf(cam->yaw) * cosf(cam->pitch);
+    direction = normalize(direction);
+    cam->target.x = cam->eye.x + direction.x;
+    cam->target.y = cam->eye.y + direction.y;
+    cam->target.z = cam->eye.z + direction.z;
 }
 
 void toggleFullscreen(WindowModel *wm)
