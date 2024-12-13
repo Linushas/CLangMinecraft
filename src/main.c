@@ -31,7 +31,7 @@ typedef struct windowModel {
     unsigned int shaderProgram;
 } WindowModel;
 
-void render(unsigned int shaderProgram, EventH *eh, Chunk chunk);
+void render(unsigned int shaderProgram, EventH *eh, Chunk chunks[]);
 void getWindowEvents(WindowModel *wm, Camera *cam);
 void toggleFullscreen(WindowModel *wm);
 int initializeWindow(WindowModel *wm);
@@ -61,17 +61,23 @@ int main(int argc, char *argv[])
     wm.eh = &eh;
     wm.cam = &cam;
 
-    Chunk chunk1 = newChunk();
+    Chunk chunks[1];
+    chunks[0] = newChunk(0.0f, 0.0f, 0.0f);
 
     setupMatrices(&cam.model, &cam.view, &cam.projection, wm.shaderProgram, cam.eye, cam.target, cam.up);
 
     loadShaders(&wm.shaderProgram);
+    glUseProgram(wm.shaderProgram);
+    GLint colorLocation = glGetUniformLocation(wm.shaderProgram, "color");
+    glUniform3f(colorLocation, 1.0f, 0.5f, 0.3f); 
     
     while (wm.eh->running)
     {
         getWindowEvents(&wm, &cam);
         cam.viewVec3 = subtractVec3d(cam.target, cam.eye);
         cam.rightVec3 = crossProduct(cam.viewVec3, cam.up);
+
+        glUniform3f(glGetUniformLocation(wm.shaderProgram, "color"), 1.0f, 0.5f, 0.31f); // Example color
 
         glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightPos"), 50.0f, 80.0f, 20.0f);
         glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
@@ -88,17 +94,16 @@ int main(int argc, char *argv[])
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &cam.view.m[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &cam.projection.m[0][0]);
 
-        render(wm.shaderProgram, wm.eh, chunk1);
+        render(wm.shaderProgram, wm.eh, chunks);
         SDL_GL_SwapWindow(wm.win);
     }
 
-    for(int i = 0; i < CHUNK_VOL; i++) {
-        glDeleteVertexArrays(1, &chunk1.blocks[i].VAO);
-        glDeleteBuffers(1, &chunk1.blocks[i].VBO);
-        glDeleteBuffers(1, &chunk1.blocks[i].EBO);
+    for(int i = 0; i < 1; i++) {
+        glDeleteVertexArrays(1, &chunks[i].VAO);
+        glDeleteBuffers(1, &chunks[i].VBO);
+        glDeleteBuffers(1, &chunks[i].EBO);
         glDeleteProgram(wm.shaderProgram);
     }
-    
 
     SDL_GL_DeleteContext(wm.glContext);
     SDL_DestroyWindow(wm.win);
@@ -107,15 +112,17 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void render(unsigned int shaderProgram, EventH *eh, Chunk chunk)
+void render(unsigned int shaderProgram, EventH *eh, Chunk chunks[])
 {
     glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(shaderProgram);
-    if(eh->r)
-        renderChunk(chunk, GL_TRIANGLES);
-    else
-        renderChunk(chunk, GL_LINE_LOOP);
+    for(int i = 0; i < 1; i++) {
+        if(eh->r)
+            renderChunk(chunks[i], GL_TRIANGLES);
+        else
+            renderChunk(chunks[i], GL_LINE_LOOP);
+    }
     glBindVertexArray(0);
 }
 
@@ -283,6 +290,8 @@ int initializeWindow(WindowModel *wm)
     // Enable V-Sync
     SDL_GL_SetSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE); 
+
 
     printf("OpenGL version: %s\n", glGetString(GL_VERSION));
     return 1;

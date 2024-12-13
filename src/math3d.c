@@ -96,7 +96,7 @@ void lookAt(Mat4x4* view, Vertex eye, Vertex target, Vertex up) {
 
 void setupMatrices(Mat4x4 *model, Mat4x4 *view, Mat4x4 *projection, unsigned int shaderProgram, Vertex eye, Vertex target, Vertex up) {
     // Setup matrices (e.g., create rotation, translation, and projection)
-    createPerspectiveProjection(projection, M_PI / 4.0f, aspectRatio, 0.1f, 1000.0f);
+    createPerspectiveProjection(projection, M_PI / FOV, aspectRatio, 0.1f, 1000.0f);
 
     lookAt(view, eye, target, up);
     
