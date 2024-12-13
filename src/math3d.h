@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <math.h>
-#include "mesh.h"
+#include "block.h"
 
 #define res         4               // 0=160*X 1=360*X 4=640*X ...
 #define aspectRatio (16.0f / 9.0f)

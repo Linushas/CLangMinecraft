@@ -2,7 +2,7 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include "shader.h"
-#include "mesh.h"
+#include "block.h"
 #include "math3d.h"
 
 typedef struct eventHandler {
@@ -31,7 +31,7 @@ typedef struct windowModel {
     unsigned int shaderProgram;
 } WindowModel;
 
-void render(unsigned int shaderProgram, EventH *eh, Mesh *mesh, int meshCount);
+void render(unsigned int shaderProgram, EventH *eh, Chunk chunk);
 void getWindowEvents(WindowModel *wm, Camera *cam);
 void toggleFullscreen(WindowModel *wm);
 int initializeWindow(WindowModel *wm);
@@ -61,13 +61,9 @@ int main(int argc, char *argv[])
     wm.eh = &eh;
     wm.cam = &cam;
 
-    setupMatrices(&cam.model, &cam.view, &cam.projection, wm.shaderProgram, cam.eye, cam.target, cam.up);
+    Chunk chunk1 = newChunk();
 
-    Mesh meshes[10];
-    int meshCount = 3;
-    meshes[0] = parseOBJ(OBJ_IXO_SPHERE, POS(0.0f, 0.0f, 0.0f), "red", 0.5f);
-    meshes[1] = parseOBJ(OBJ_CUBE, POS(2.0f, 0.0f, 0.0f), "yellow", 1.0f);
-    meshes[2] = parseOBJ("models/Helicopter.obj", POS(-2.0f, 0.0f, 0.0f), "cyan", 1.0f);
+    setupMatrices(&cam.model, &cam.view, &cam.projection, wm.shaderProgram, cam.eye, cam.target, cam.up);
 
     loadShaders(&wm.shaderProgram);
     
@@ -77,7 +73,7 @@ int main(int argc, char *argv[])
         cam.viewVec3 = subtractVec3d(cam.target, cam.eye);
         cam.rightVec3 = crossProduct(cam.viewVec3, cam.up);
 
-        glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightPos"), 6.0f, 2.0f, 6.0f);
+        glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightPos"), 50.0f, 80.0f, 20.0f);
         glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
         glUniform3f(glGetUniformLocation(wm.shaderProgram, "objectColor"), 0.5f, 0.5f, 0.5f);
         glUniform3f(glGetUniformLocation(wm.shaderProgram, "viewPos"), cam.eye.x, cam.eye.y, cam.eye.z);
@@ -92,16 +88,17 @@ int main(int argc, char *argv[])
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &cam.view.m[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &cam.projection.m[0][0]);
 
-        render(wm.shaderProgram, wm.eh, meshes, meshCount);
+        render(wm.shaderProgram, wm.eh, chunk1);
         SDL_GL_SwapWindow(wm.win);
     }
 
-    for (int i = 0; i < meshCount; i++)
-    {
-        destroyMesh(&meshes[i]);
+    for(int i = 0; i < CHUNK_VOL; i++) {
+        glDeleteVertexArrays(1, &chunk1.blocks[i].VAO);
+        glDeleteBuffers(1, &chunk1.blocks[i].VBO);
+        glDeleteBuffers(1, &chunk1.blocks[i].EBO);
+        glDeleteProgram(wm.shaderProgram);
     }
-
-    glDeleteProgram(wm.shaderProgram);
+    
 
     SDL_GL_DeleteContext(wm.glContext);
     SDL_DestroyWindow(wm.win);
@@ -110,22 +107,15 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void render(unsigned int shaderProgram, EventH *eh, Mesh *mesh, int meshCount)
+void render(unsigned int shaderProgram, EventH *eh, Chunk chunk)
 {
     glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(shaderProgram);
-    for (int i = 0; i < meshCount; i++)
-    {
-        if (eh->r)
-        {
-            renderMesh(mesh[i], GL_TRIANGLES);
-        }
-        else
-        {
-            renderMesh(mesh[i], GL_LINE_LOOP);
-        }
-    }
+    if(eh->r)
+        renderChunk(chunk, GL_TRIANGLES);
+    else
+        renderChunk(chunk, GL_LINE_LOOP);
     glBindVertexArray(0);
 }
 
