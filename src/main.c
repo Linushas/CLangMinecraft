@@ -1,40 +1,43 @@
 #include <stdio.h>
+#include <string.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <GL/glew.h>
 #include "shader.h"
 #include "block.h"
 #include "math3d.h"
+#include "hud.h"
 
 #define NR_OF_CHUNKS 100
 
-typedef struct eventHandler {
-    SDL_Event event;
-    int running;
-    int fullScreen;
-    int r;
-    int w,a,s,d;
-    int space,ctrl;
-    float mouse_dx, mouse_dy;
-} EventH;
+// typedef struct eventHandler {
+//     SDL_Event event;
+//     int running;
+//     int fullScreen;
+//     int r;
+//     int w,a,s,d;
+//     int space,ctrl;
+//     float mouse_dx, mouse_dy;
+// } EventH;
 
-typedef struct camera {
-    Mat4x4 model, view, projection;
-    Vertex eye, target, up;
-    float angleX, angleY, angleZ;
-    Vertex viewVec3, rightVec3;
-    float pitch, yaw;
-} Camera;
+// typedef struct camera {
+//     Mat4x4 model, view, projection;
+//     Vertex eye, target, up;
+//     float angleX, angleY, angleZ;
+//     Vertex viewVec3, rightVec3;
+//     float pitch, yaw;
+// } Camera;
 
-typedef struct windowModel {
-    SDL_Window *win;
-    SDL_GLContext glContext;
-    EventH *eh;
-    Camera *cam;
-    unsigned int shaderProgram;
-} WindowModel;
+// typedef struct windowModel {
+//     SDL_Window *win;
+//     SDL_GLContext glContext;
+//     EventH *eh;
+//     Camera *cam;
+//     unsigned int shaderProgram;
+//     GLuint hudShaderProgram;
+// } WindowModel;
 
-void render(unsigned int shaderProgram, EventH *eh, Chunk chunks[]);
+void render(unsigned int shaderProgram, WindowModel *wm, Chunk chunks[]);
 void getWindowEvents(WindowModel *wm, Camera *cam);
 void toggleFullscreen(WindowModel *wm);
 int initializeWindow(WindowModel *wm);
@@ -103,6 +106,8 @@ int main(int argc, char *argv[])
 
 
 
+
+
     Chunk chunks[NR_OF_CHUNKS];
     for(int x = 0; x < sqrt(NR_OF_CHUNKS); x++) {
         for(int z = 0; z < sqrt(NR_OF_CHUNKS); z++) {
@@ -113,10 +118,11 @@ int main(int argc, char *argv[])
     setupMatrices(&cam.model, &cam.view, &cam.projection, wm.shaderProgram, cam.eye, cam.target, cam.up);
 
     loadShaders(&wm.shaderProgram);
+    loadHUDShaders(&wm.hudShaderProgram);
+    
     glUseProgram(wm.shaderProgram);
     glUniform1i(glGetUniformLocation(wm.shaderProgram, "ourTexture"), 0);
 
-    
     while (wm.eh->running)
     {
         getWindowEvents(&wm, &cam);
@@ -125,11 +131,6 @@ int main(int argc, char *argv[])
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID);
-
-        // glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightPos"), 50.0f, 80.0f, 20.0f);
-        // glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
-        // glUniform3f(glGetUniformLocation(wm.shaderProgram, "objectColor"), 0.5f, 0.5f, 0.5f);
-        // glUniform3f(glGetUniformLocation(wm.shaderProgram, "viewPos"), cam.eye.x, cam.eye.y, cam.eye.z);
 
         setupMatrices(&cam.model, &cam.view, &cam.projection, wm.shaderProgram, cam.eye, cam.target, cam.up);
         createRotationMatrix(&cam.model, cam.angleX, cam.angleY, cam.angleZ);
@@ -141,7 +142,10 @@ int main(int argc, char *argv[])
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &cam.view.m[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &cam.projection.m[0][0]);
 
-        render(wm.shaderProgram, wm.eh, chunks);
+        
+        render(wm.shaderProgram, &wm, chunks);
+        renderHUD(&wm, wm.hudShaderProgram); 
+        glUseProgram(wm.shaderProgram);
         SDL_GL_SwapWindow(wm.win);
     }
 
@@ -159,13 +163,13 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void render(unsigned int shaderProgram, EventH *eh, Chunk chunks[])
+void render(unsigned int shaderProgram, WindowModel *wm, Chunk chunks[])
 {
     glClearColor(0.65f, 0.75f, 0.9f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(shaderProgram);
     for(int i = 0; i < NR_OF_CHUNKS; i++) {
-        if(eh->r)
+        if(wm->eh->r)
             renderChunk(chunks[i], GL_TRIANGLES);
         else
             renderChunk(chunks[i], GL_LINES);

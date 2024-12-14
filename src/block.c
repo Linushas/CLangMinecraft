@@ -177,7 +177,7 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
     return newChunk;
 }
 
-    void renderChunk(Chunk chunk, int mode) {
+void renderChunk(Chunk chunk, int mode) {
     glBindVertexArray(chunk.VAO);
     glDrawElements(mode, chunk.indiceCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
