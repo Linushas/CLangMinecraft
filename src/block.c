@@ -6,15 +6,24 @@
 
 Face newFace(float x, float y, float z, int faceID) {
     float size = BLOCK_SIZE;
+    float sideTexCoordX = (3 * 16) / 512.0f;
+    float sideTexCoordY = (0 * 16) / 256.0f;
+    float sideTexCoordX2 = sideTexCoordX + (16 / 512.0f);
+    float sideTexCoordY2 = sideTexCoordY + (16 / 256.0f);
+
+    float topTexCoordX = (2 * 16) / 512.0f;
+    float topTexCoordY = (0 * 16) / 256.0f;
+    float topTexCoordX2 = topTexCoordX + (16 / 512.0f);
+    float topTexCoordY2 = topTexCoordY + (16 / 256.0f);
 
     switch(faceID) {
         case FRONT:
         Face front = {
             .vertices = {
-                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
-                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
-                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
-                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f }
+                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f,      sideTexCoordX, sideTexCoordY2  },
+                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f,      sideTexCoordX2, sideTexCoordY2 },
+                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f,      sideTexCoordX2, sideTexCoordY  },
+                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f,      sideTexCoordX, sideTexCoordY   }
             },
             .indices = { 0, 1, 2, 2, 3, 0 }
         };
@@ -22,10 +31,10 @@ Face newFace(float x, float y, float z, int faceID) {
         case BACK:
         Face back = {
             .vertices = {
-                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
-                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
-                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
-                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f }
+                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f,      sideTexCoordX, sideTexCoordY2  },
+                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f,      sideTexCoordX2, sideTexCoordY2 },
+                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f,      sideTexCoordX2, sideTexCoordY  },
+                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f,      sideTexCoordX, sideTexCoordY   }
             },
             .indices = { 0, 1, 2, 2, 3, 0 }
         };
@@ -33,10 +42,10 @@ Face newFace(float x, float y, float z, int faceID) {
         case LEFT:
         Face left = {
             .vertices = {
-                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f },
-                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f },
-                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f },
-                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f }
+                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f,      sideTexCoordX, sideTexCoordY2  },
+                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f,      sideTexCoordX2, sideTexCoordY2 },
+                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f,      sideTexCoordX2, sideTexCoordY  },
+                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f,      sideTexCoordX, sideTexCoordY   }
             },
             .indices = { 0, 1, 2, 2, 3, 0 }
         };
@@ -44,10 +53,10 @@ Face newFace(float x, float y, float z, int faceID) {
         case RIGHT:
         Face right = {
             .vertices = {
-                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f },
-                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f },
-                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f },
-                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f }
+                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f,      sideTexCoordX, sideTexCoordY2  },
+                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f,      sideTexCoordX2, sideTexCoordY2 },
+                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f,      sideTexCoordX2, sideTexCoordY  },
+                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f,      sideTexCoordX, sideTexCoordY   }
             },
             .indices = { 0, 1, 2, 2, 3, 0 }
         };
@@ -55,10 +64,10 @@ Face newFace(float x, float y, float z, int faceID) {
         case TOP:
         Face top = {
             .vertices = {
-                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f },
-                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f },
-                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f },
-                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f }
+                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f,      topTexCoordX, topTexCoordY2  },
+                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f,      topTexCoordX2, topTexCoordY2 },
+                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f,      topTexCoordX2, topTexCoordY  },
+                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f,      topTexCoordX, topTexCoordY   }
             },
             .indices = { 0, 1, 2, 2, 3, 0 }
         };
@@ -66,10 +75,10 @@ Face newFace(float x, float y, float z, int faceID) {
         case BOTTOM:
         Face bottom = {
             .vertices = {
-                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f },
-                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f },
-                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f },
-                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f }
+                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f,      topTexCoordX, topTexCoordY2  },
+                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f,      topTexCoordX2, topTexCoordY2 },
+                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f,      topTexCoordX2, topTexCoordY  },
+                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f,      topTexCoordX, topTexCoordY   }
             },
             .indices = { 0, 1, 2, 2, 3, 0 }
         };
@@ -151,6 +160,9 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
 
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);

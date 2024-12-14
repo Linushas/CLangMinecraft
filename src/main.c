@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <GL/glew.h>
 #include "shader.h"
 #include "block.h"
@@ -40,8 +41,8 @@ int initializeWindow(WindowModel *wm);
 
 Camera setupCamera() {
     Mat4x4 model = {0}, view = {0}, projection = {0};
-    Vertex eye = {0.0f, 20.0f, 4.0f};
-    Vertex target = {0.0f, 0.0f, 0.0f};
+    Vertex eye = {0.0f, 20.0f, 0.0f};
+    Vertex target = {0.0f, 0.0f, -4.0f};
     Vertex up = {0.0f, 1.0f, 0.0f};
     float angleX = 0.0f, angleY = 0.0f, angleZ = 0.0f;
 
@@ -63,23 +64,58 @@ int main(int argc, char *argv[])
     wm.eh = &eh;
     wm.cam = &cam;
 
+
+
+    SDL_Surface *surface = IMG_Load("textures/blocks.png");
+    if (surface == NULL) {
+        printf("Unable to load image: %s\n", IMG_GetError());
+        return 1;
+    }
+    int width = surface->w;
+    int height = surface->h;
+    int format = surface->format->BytesPerPixel;
+
+    // Check if the image has an alpha channel
+    GLenum internalFormat, dataFormat;
+    if (format == 4) { // RGBA
+        internalFormat = GL_RGBA;
+        dataFormat = GL_RGBA;
+    } else if (format == 3) { // RGB
+        internalFormat = GL_RGB;
+        dataFormat = GL_RGB;
+    } else {
+        printf("Unsupported pixel format\n");
+        return 1;
+    }
+
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, surface->pixels);
+    SDL_FreeSurface(surface);
+
+
+
     Chunk chunks[NR_OF_CHUNKS];
     for(int x = 0; x < sqrt(NR_OF_CHUNKS); x++) {
         for(int z = 0; z < sqrt(NR_OF_CHUNKS); z++) {
-            chunks[(x*(int)sqrt(NR_OF_CHUNKS)) + z] = newChunk(0.0f + x*CHUNK_SIZE, 0.0f, 0.0f + z*CHUNK_SIZE);
+            chunks[(x*(int)sqrt(NR_OF_CHUNKS)) + z] = newChunk(-(CHUNK_SIZE*sqrt(NR_OF_CHUNKS)/2) + x*CHUNK_SIZE, 0.0f, -(CHUNK_SIZE*sqrt(NR_OF_CHUNKS)/2) + z*CHUNK_SIZE);
         }
     }
-    // chunks[0] = newChunk(0.0f, 0.0f, 0.0f);
-    // chunks[1] = newChunk(0.0f + CHUNK_SIZE, 0.0f, 0.0f);
-    // chunks[2] = newChunk(0.0f + CHUNK_SIZE, 0.0f, 0.0f + CHUNK_SIZE);
-    // chunks[3] = newChunk(0.0f, 0.0f, 0.0f + CHUNK_SIZE);
 
     setupMatrices(&cam.model, &cam.view, &cam.projection, wm.shaderProgram, cam.eye, cam.target, cam.up);
 
     loadShaders(&wm.shaderProgram);
     glUseProgram(wm.shaderProgram);
-    GLint colorLocation = glGetUniformLocation(wm.shaderProgram, "color");
-    glUniform3f(colorLocation, 1.0f, 0.5f, 0.3f); 
+    glUniform1i(glGetUniformLocation(wm.shaderProgram, "ourTexture"), 0);
+
     
     while (wm.eh->running)
     {
@@ -87,12 +123,13 @@ int main(int argc, char *argv[])
         cam.viewVec3 = subtractVec3d(cam.target, cam.eye);
         cam.rightVec3 = crossProduct(cam.viewVec3, cam.up);
 
-        glUniform3f(glGetUniformLocation(wm.shaderProgram, "color"), 1.0f, 0.5f, 0.31f); // Example color
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID);
 
-        glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightPos"), 50.0f, 80.0f, 20.0f);
-        glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
-        glUniform3f(glGetUniformLocation(wm.shaderProgram, "objectColor"), 0.5f, 0.5f, 0.5f);
-        glUniform3f(glGetUniformLocation(wm.shaderProgram, "viewPos"), cam.eye.x, cam.eye.y, cam.eye.z);
+        // glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightPos"), 50.0f, 80.0f, 20.0f);
+        // glUniform3f(glGetUniformLocation(wm.shaderProgram, "lightColor"), 1.0f, 1.0f, 1.0f);
+        // glUniform3f(glGetUniformLocation(wm.shaderProgram, "objectColor"), 0.5f, 0.5f, 0.5f);
+        // glUniform3f(glGetUniformLocation(wm.shaderProgram, "viewPos"), cam.eye.x, cam.eye.y, cam.eye.z);
 
         setupMatrices(&cam.model, &cam.view, &cam.projection, wm.shaderProgram, cam.eye, cam.target, cam.up);
         createRotationMatrix(&cam.model, cam.angleX, cam.angleY, cam.angleZ);
@@ -268,6 +305,11 @@ int initializeWindow(WindowModel *wm)
     {
         printf("error initializing SDL: %s\n", SDL_GetError());
         return 0;
+    }
+
+    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+        printf("Unable to initialize SDL_Image: %s\n", IMG_GetError());
+        return 1;
     }
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);

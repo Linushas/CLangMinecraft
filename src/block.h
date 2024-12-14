@@ -18,7 +18,7 @@ enum blockType{
 typedef struct vertex {
     float x, y, z;
     float nx, ny, nz;
-    float tx, ty, yz;
+    float tx, ty;
 } Vertex;
 
 typedef struct face {
