@@ -5,6 +5,8 @@
 #include "block.h"
 #include "math3d.h"
 
+#define NR_OF_CHUNKS 36
+
 typedef struct eventHandler {
     SDL_Event event;
     int running;
@@ -38,7 +40,7 @@ int initializeWindow(WindowModel *wm);
 
 Camera setupCamera() {
     Mat4x4 model = {0}, view = {0}, projection = {0};
-    Vertex eye = {0.0f, 0.0f, 4.0f};
+    Vertex eye = {0.0f, 20.0f, 4.0f};
     Vertex target = {0.0f, 0.0f, 0.0f};
     Vertex up = {0.0f, 1.0f, 0.0f};
     float angleX = 0.0f, angleY = 0.0f, angleZ = 0.0f;
@@ -61,8 +63,16 @@ int main(int argc, char *argv[])
     wm.eh = &eh;
     wm.cam = &cam;
 
-    Chunk chunks[1];
-    chunks[0] = newChunk(0.0f, 0.0f, 0.0f);
+    Chunk chunks[NR_OF_CHUNKS];
+    for(int x = 0; x < sqrt(NR_OF_CHUNKS); x++) {
+        for(int z = 0; z < sqrt(NR_OF_CHUNKS); z++) {
+            chunks[(x*(int)sqrt(NR_OF_CHUNKS)) + z] = newChunk(0.0f + x*CHUNK_SIZE, 0.0f, 0.0f + z*CHUNK_SIZE);
+        }
+    }
+    // chunks[0] = newChunk(0.0f, 0.0f, 0.0f);
+    // chunks[1] = newChunk(0.0f + CHUNK_SIZE, 0.0f, 0.0f);
+    // chunks[2] = newChunk(0.0f + CHUNK_SIZE, 0.0f, 0.0f + CHUNK_SIZE);
+    // chunks[3] = newChunk(0.0f, 0.0f, 0.0f + CHUNK_SIZE);
 
     setupMatrices(&cam.model, &cam.view, &cam.projection, wm.shaderProgram, cam.eye, cam.target, cam.up);
 
@@ -98,7 +108,7 @@ int main(int argc, char *argv[])
         SDL_GL_SwapWindow(wm.win);
     }
 
-    for(int i = 0; i < 1; i++) {
+    for(int i = 0; i < NR_OF_CHUNKS; i++) {
         glDeleteVertexArrays(1, &chunks[i].VAO);
         glDeleteBuffers(1, &chunks[i].VBO);
         glDeleteBuffers(1, &chunks[i].EBO);
@@ -114,14 +124,14 @@ int main(int argc, char *argv[])
 
 void render(unsigned int shaderProgram, EventH *eh, Chunk chunks[])
 {
-    glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
+    glClearColor(0.65f, 0.75f, 0.9f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(shaderProgram);
-    for(int i = 0; i < 1; i++) {
+    for(int i = 0; i < NR_OF_CHUNKS; i++) {
         if(eh->r)
             renderChunk(chunks[i], GL_TRIANGLES);
         else
-            renderChunk(chunks[i], GL_LINE_LOOP);
+            renderChunk(chunks[i], GL_LINES);
     }
     glBindVertexArray(0);
 }
@@ -290,7 +300,9 @@ int initializeWindow(WindowModel *wm)
     // Enable V-Sync
     SDL_GL_SetSwapInterval(1);
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     glDisable(GL_CULL_FACE); 
+    glCullFace(GL_BACK);
 
 
     printf("OpenGL version: %s\n", glGetString(GL_VERSION));

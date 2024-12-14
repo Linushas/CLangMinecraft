@@ -4,63 +4,77 @@
 #include <GL/glew.h>
 #include "block.h"
 
-Block newBlock(float x, float y, float z) {
+Face newFace(float x, float y, float z, int faceID) {
     float size = BLOCK_SIZE;
-    Block newBlock = {
-        .vertices = {
-            // Front face
-            { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
-            { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
-            { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
-            { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
 
-            // Back face
-            { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
-            { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
-            { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
-            { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
-
-            // Left face
-            { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f },
-            { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f },
-            { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f },
-            { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f },
-
-            // Right face
-            { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f },
-            { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f },
-            { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f },
-            { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f },
-
-            // Top face
-            { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f },
-            { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f },
-            { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f },
-            { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f },
-
-            // Bottom face
-            { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f },
-            { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f },
-            { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f },
-            { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f },
-        },
-        .indices = {
-            // Front face
-            0, 1, 2, 2, 3, 0,
-            // Back face
-            4, 5, 6, 6, 7, 4,
-            // Left face
-            8, 9, 10, 10, 11, 8,
-            // Right face
-            12, 13, 14, 14, 15, 12,
-            // Top face
-            16, 17, 18, 18, 19, 16,
-            // Bottom face
-            20, 21, 22, 22, 23, 20,
-        }
-    };
-
-    return newBlock;
+    switch(faceID) {
+        case FRONT:
+        Face front = {
+            .vertices = {
+                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
+                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
+                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f },
+                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f }
+            },
+            .indices = { 0, 1, 2, 2, 3, 0 }
+        };
+        return front;
+        case BACK:
+        Face back = {
+            .vertices = {
+                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
+                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
+                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f },
+                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f }
+            },
+            .indices = { 0, 1, 2, 2, 3, 0 }
+        };
+        return back;
+        case LEFT:
+        Face left = {
+            .vertices = {
+                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f },
+                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f },
+                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f },
+                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f }
+            },
+            .indices = { 0, 1, 2, 2, 3, 0 }
+        };
+        return left;
+        case RIGHT:
+        Face right = {
+            .vertices = {
+                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f },
+                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f },
+                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f },
+                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f }
+            },
+            .indices = { 0, 1, 2, 2, 3, 0 }
+        };
+        return right;
+        case TOP:
+        Face top = {
+            .vertices = {
+                { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f },
+                { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f },
+                { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f },
+                { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f }
+            },
+            .indices = { 0, 1, 2, 2, 3, 0 }
+        };
+        return top;
+        case BOTTOM:
+        Face bottom = {
+            .vertices = {
+                { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f },
+                { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f },
+                { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f },
+                { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f }
+            },
+            .indices = { 0, 1, 2, 2, 3, 0 }
+        };
+        return bottom;
+    }
 }
 
 Chunk newChunk(float xPos, float yPos, float zPos) {
@@ -69,22 +83,54 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
     Vertex *allVertices = (Vertex*)malloc(sizeof(Vertex) * CHUNK_VOL *24);
     unsigned int *allIndices = (unsigned int*)malloc(sizeof(unsigned int) * CHUNK_VOL *36);
 
-    unsigned int vertexOffset = 0;
-    unsigned int indexOffset = 0; 
+    int vertexOffset = 0;
+    int indexOffset = 0;
 
-    for(int z = 0; z < CHUNK_SIZE; z++) {
-        for(int y = 0; y < CHUNK_SIZE; y++) {
-            for(int x = 0; x < CHUNK_SIZE; x++) {
-                Block block = newBlock(x*BLOCK_SIZE, y*BLOCK_SIZE, z*BLOCK_SIZE);
-                for(int i = 0; i < 24; i++) {
-                    allVertices[vertexOffset + i] = block.vertices[i];
-                }
-                for(int i = 0; i < 36; i++) {
-                    allIndices[indexOffset + i] = block.indices[i] + vertexOffset;
+    for (int z = 0; z < CHUNK_SIZE; z++) {
+        for (int y = 0; y < CHUNK_SIZE; y++) {
+            for (int x = 0; x < CHUNK_SIZE; x++) {
+                newChunk.blocks[x][y][z].type = GRASS;
+            }
+        }
+    }
+
+    // newChunk.blocks[5][5][CHUNK_SIZE].type = AIR;
+
+    for (int z = 0; z < CHUNK_SIZE; z++) {
+        for (int y = 0; y < CHUNK_SIZE; y++) {
+            for (int x = 0; x < CHUNK_SIZE; x++) {
+                int visibleFaces[6] = {1,1,1,1,1,1}; //front back left right top bottom
+
+                if (z < CHUNK_SIZE - 1 && newChunk.blocks[x][y][z + 1].type != AIR)
+                    visibleFaces[0] = 0; 
+                if (z > 0 && newChunk.blocks[x][y][z - 1].type != AIR)
+                    visibleFaces[1] = 0; 
+                if (x > 0 && newChunk.blocks[x - 1][y][z].type != AIR)
+                    visibleFaces[2] = 0;
+                if (x < CHUNK_SIZE - 1 && newChunk.blocks[x + 1][y][z].type != AIR)
+                    visibleFaces[3] = 0;
+                if (y < CHUNK_SIZE - 1 && newChunk.blocks[x][y + 1][z].type != AIR)
+                    visibleFaces[4] = 0; 
+                if (y > 0 && newChunk.blocks[x][y - 1][z].type != AIR)
+                    visibleFaces[5] = 0;
+
+                for(int faceIndex = 0; faceIndex < 6; faceIndex++) {
+                    if(visibleFaces[faceIndex] && newChunk.blocks[x][y][z].type != AIR) {
+                        float blockX = xPos + x * BLOCK_SIZE;
+                        float blockY = yPos + y * BLOCK_SIZE;
+                        float blockZ = zPos + z * BLOCK_SIZE;
+                        Face current = newFace(blockX, blockY, blockZ, faceIndex);
+
+                        memcpy(&allVertices[vertexOffset], current.vertices, sizeof(Vertex) * 4);
+                        for (int i = 0; i < 6; i++) {
+                            allIndices[indexOffset + i] = current.indices[i] + vertexOffset;
+                        }
+
+                        vertexOffset += 4;
+                        indexOffset += 6;
+                    }
                 }
 
-                vertexOffset += 24;
-                indexOffset += 36;
             }
         }
     }
@@ -117,11 +163,10 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
     return newChunk;
 }
 
-void renderChunk(Chunk chunk, int mode) {
+    void renderChunk(Chunk chunk, int mode) {
     glBindVertexArray(chunk.VAO);
     glDrawElements(mode, chunk.indiceCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-    // printf("%d\n", chunk.indiceCount);
 }
 
 
