@@ -7,9 +7,9 @@
 Face newFace(float x, float y, float z, int faceID) {
     float size = BLOCK_SIZE;
     float sideTexCoordX = (3 * 16) / 512.0f;
-    float sideTexCoordY = (0 * 16) / 256.0f;
+    float sideTexCoordY = (1 * 16) / 256.0f;
     float sideTexCoordX2 = sideTexCoordX + (16 / 512.0f);
-    float sideTexCoordY2 = sideTexCoordY + (16 / 256.0f);
+    float sideTexCoordY2 = sideTexCoordY - (16 / 256.0f);
 
     float topTexCoordX = (2 * 16) / 512.0f;
     float topTexCoordY = (0 * 16) / 256.0f;
@@ -103,7 +103,9 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
         }
     }
 
-    // newChunk.blocks[5][5][CHUNK_SIZE].type = AIR;
+    newChunk.blocks[5][CHUNK_SIZE-1][5].type = AIR;
+    newChunk.blocks[5][CHUNK_SIZE-1][4].type = AIR;
+    newChunk.blocks[4][CHUNK_SIZE-1][5].type = AIR;
 
     for (int z = 0; z < CHUNK_SIZE; z++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {

@@ -6,7 +6,7 @@
 #include "block.h"
 #include "math3d.h"
 
-#define NR_OF_CHUNKS 36
+#define NR_OF_CHUNKS 100
 
 typedef struct eventHandler {
     SDL_Event event;
