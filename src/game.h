@@ -48,13 +48,12 @@ typedef struct windowModel {
 
 typedef struct chunk {
     int x, z;
-    int chunkData;
+    uint8_t ***chunkData;
     int inRange;
 } Chunk;
 
 typedef struct world {
-    Chunk chunks[WORLD_SIZE][WORLD_SIZE];
-    ChunkMesh **visibleChunks;
+    Chunk **chunks;
     int chunkCount;
     int renderDistance;
 } World;

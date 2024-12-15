@@ -3,6 +3,7 @@
 #include <string.h>
 #include <GL/glew.h>
 #include "block.h"
+#include "game.h"
 
 Face newFace(float x, float y, float z, int faceID) {
     float size = BLOCK_SIZE;
@@ -86,7 +87,7 @@ Face newFace(float x, float y, float z, int faceID) {
     }
 }
 
-ChunkMesh newChunk(float xPos, float yPos, float zPos) {
+ChunkMesh newChunk(World *world, float xPos, float yPos, float zPos, int chunkX, int chunkZ) {
     ChunkMesh newChunk = {.x = xPos, .y = yPos, .z = zPos};
 
     Vertex *allVertices = (Vertex*)malloc(sizeof(Vertex) * CHUNK_VOL *24);
@@ -98,14 +99,10 @@ ChunkMesh newChunk(float xPos, float yPos, float zPos) {
     for (int z = 0; z < CHUNK_SIZE; z++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {
             for (int x = 0; x < CHUNK_SIZE; x++) {
-                newChunk.blocks[x][y][z].type = GRASS;
+                newChunk.blocks[x][y][z].type = world->chunks[chunkX][chunkZ].chunkData[x][y][z];
             }
         }
     }
-
-    // newChunk.blocks[5][CHUNK_SIZE-1][5].type = AIR;
-    // newChunk.blocks[5][CHUNK_SIZE-1][4].type = AIR;
-    // newChunk.blocks[4][CHUNK_SIZE-1][5].type = AIR;
 
     for (int z = 0; z < CHUNK_SIZE; z++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {

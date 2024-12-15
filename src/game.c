@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "game.h"
 #include "hud.h"
 
@@ -63,7 +65,7 @@ void reloadChunks(int *playerChunkX, int *playerChunkZ, World *world, ChunkMesh 
     for(int x = 0; x < WORLD_SIZE; x++) {
         for(int z = 0; z < WORLD_SIZE; z++) {
             if(world->chunks[x][z].inRange) {
-                chunks[chunkIndex] = newChunk((float)world->chunks[x][z].x*CHUNK_SIZE, 0.0f, (float)world->chunks[x][z].z*CHUNK_SIZE);
+                chunks[chunkIndex] = newChunk(world, (float)world->chunks[x][z].x*CHUNK_SIZE, 0.0f, (float)world->chunks[x][z].z*CHUNK_SIZE, x, z);
                 chunkIndex++;
             }
         }
@@ -71,18 +73,81 @@ void reloadChunks(int *playerChunkX, int *playerChunkZ, World *world, ChunkMesh 
 }
 
 void mainGameLoop(WindowModel *wm) {
+    srand(time(NULL));
+
     World world;
     int playerChunkX = (int)wm->cam->eye.x / 16;
     int playerChunkZ = (int)wm->cam->eye.z / 16;
 
-    world.renderDistance = 8;
-    for(int x = 0; x < WORLD_SIZE; x++) {
-        for(int z = 0; z < WORLD_SIZE; z++) {
-            world.chunks[x][z].x = x - WORLD_SIZE/2;
-            world.chunks[x][z].z = z - WORLD_SIZE/2;
-            world.chunks[x][z].inRange = 0;
+
+    world.chunks = (Chunk**) malloc(WORLD_SIZE * sizeof(Chunk*));
+    if (!world.chunks) {
+        printf("could not load world!\n");
+        return;
+    }
+    for (int x = 0; x < WORLD_SIZE; x++) {
+        world.chunks[x] = (Chunk*) malloc(WORLD_SIZE * sizeof(Chunk));
+        if (!world.chunks[x]) {
+            printf("could not load world!\n");
+            return;
+        }
+        for (int z = 0; z < WORLD_SIZE; z++) {
+            
+
+            world.chunks[x][z].chunkData = (uint8_t***) malloc(CHUNK_SIZE * sizeof(uint8_t**));
+            if (!world.chunks[x][z].chunkData) {
+                printf("could not load world!\n");
+                return;
+            }
+            for (int cx = 0; cx < CHUNK_SIZE; cx++) {
+                world.chunks[x][z].chunkData[cx] = (uint8_t**) malloc(CHUNK_SIZE * sizeof(uint8_t*));
+                if (!world.chunks[x][z].chunkData[cx]) {
+                    printf("could not load world!\n");
+                    return;
+                }
+                for (int cy = 0; cy < CHUNK_SIZE; cy++) {
+                    world.chunks[x][z].chunkData[cx][cy] = (uint8_t*) malloc(CHUNK_SIZE * sizeof(uint8_t));
+                    if (!world.chunks[x][z].chunkData[cx][cy]) {
+                        printf("could not load world!\n");
+                        return;
+                    }
+                }
+            }
+
+
         }
     }
+    // Initialize chunk data
+    int height = 0;
+    for(int x = 0; x < WORLD_SIZE; x++) {
+        for(int z = 0; z < WORLD_SIZE; z++) {
+            if (world.chunks[x] && world.chunks[x][z].chunkData) {
+                world.chunks[x][z].x = x - WORLD_SIZE/2;
+                world.chunks[x][z].z = z - WORLD_SIZE/2;
+                world.chunks[x][z].inRange = 0;
+                for(int cx = 0; cx < CHUNK_SIZE; cx++) {
+                    for(int cz = 0; cz < CHUNK_SIZE; cz++) {
+                        height = rand()%7;
+                        int cy;
+                        for(cy = 0; cy < (CHUNK_SIZE-8)+height; cy++) {
+                            if (world.chunks[x][z].chunkData[cx] && world.chunks[x][z].chunkData[cx][cy]) {
+                                world.chunks[x][z].chunkData[cx][cy][cz] = GRASS;
+                            }
+                        }
+                        for(cy; cy < CHUNK_SIZE; cy++) {
+                            if (world.chunks[x][z].chunkData[cx] && world.chunks[x][z].chunkData[cx][cy]) {
+                                world.chunks[x][z].chunkData[cx][cy][cz] = AIR;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    world.renderDistance = 8;
 
     world.chunkCount = 0;
     for(int x = 0; x < WORLD_SIZE; x++) {
@@ -103,7 +168,7 @@ void mainGameLoop(WindowModel *wm) {
     for(int x = 0; x < WORLD_SIZE; x++) {
         for(int z = 0; z < WORLD_SIZE; z++) {
             if(world.chunks[x][z].inRange) {
-                chunks[chunkIndex] = newChunk((float)world.chunks[x][z].x*CHUNK_SIZE, 0.0f, (float)world.chunks[x][z].z*CHUNK_SIZE);
+                chunks[chunkIndex] = newChunk(&world, (float)world.chunks[x][z].x*CHUNK_SIZE, 0.0f, (float)world.chunks[x][z].z*CHUNK_SIZE, x, z);
                 chunkIndex++;
             }
         }
@@ -178,6 +243,19 @@ void mainGameLoop(WindowModel *wm) {
         }
     }
 
+    for (int x = 0; x < WORLD_SIZE; x++) {
+        for (int z = 0; z < WORLD_SIZE; z++) {
+            for (int cx = 0; cx < CHUNK_SIZE; cx++) {
+                for (int cy = 0; cy < CHUNK_SIZE; cy++) {
+                    free(world.chunks[x][z].chunkData[cx][cy]);
+                }
+                free(world.chunks[x][z].chunkData[cx]);
+            }
+            free(world.chunks[x][z].chunkData);
+        }
+        free(world.chunks[x]);
+    }
+    free(world.chunks);
     free(chunks);
 }
 

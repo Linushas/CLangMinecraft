@@ -37,8 +37,10 @@ typedef struct chunkMesh {
     unsigned int VAO, VBO, EBO;
 } ChunkMesh;
 
+typedef struct world World;
+
 Face newFace(float x, float y, float z, int faceID);
-ChunkMesh newChunk(float x, float y, float z);
+ChunkMesh newChunk(World *world, float xPos, float yPos, float zPos, int chunkX, int chunkZ);
 void renderChunk(ChunkMesh chunk, int mode);
 
 #endif
