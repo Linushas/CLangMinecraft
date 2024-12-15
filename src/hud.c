@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <SDL2/SDL_ttf.h>
 #include "hud.h"
 
 void orthographicMatrix(Mat4x4 *matrix, float left, float right, float bottom, float top, float near, float far) {

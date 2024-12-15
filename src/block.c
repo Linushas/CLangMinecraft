@@ -90,7 +90,7 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
     Chunk newChunk = {.x = xPos, .y = yPos, .z = zPos};
 
     Vertex *allVertices = (Vertex*)malloc(sizeof(Vertex) * CHUNK_VOL *24);
-    unsigned int *allIndices = (unsigned int*)malloc(sizeof(unsigned int) * CHUNK_VOL *36);
+    uint16_t *allIndices = (uint16_t*)malloc(sizeof(uint16_t) * CHUNK_VOL *36);
 
     int vertexOffset = 0;
     int indexOffset = 0;
@@ -155,7 +155,7 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertexOffset, allVertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, newChunk.EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indexOffset, allIndices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16_t) * indexOffset, allIndices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
     glEnableVertexAttribArray(0);
@@ -179,7 +179,7 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
 
 void renderChunk(Chunk chunk, int mode) {
     glBindVertexArray(chunk.VAO);
-    glDrawElements(mode, chunk.indiceCount, GL_UNSIGNED_INT, 0);
+    glDrawElements(mode, chunk.indiceCount, GL_UNSIGNED_SHORT, 0);
     glBindVertexArray(0);
 }
 

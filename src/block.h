@@ -23,11 +23,11 @@ typedef struct vertex {
 
 typedef struct face {
     Vertex vertices[4];
-    unsigned int indices[6];
+    uint8_t indices[6];
 } Face;
 
 typedef struct block {
-    int type;
+    uint8_t type;
 } Block;
 
 typedef struct chunk {
