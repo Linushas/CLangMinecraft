@@ -7,7 +7,7 @@
 #include <GL/glew.h>
 #include "math3d.h"
 
-#define NR_OF_CHUNKS 100
+#define WORLD_SIZE 128 // 128*128 chunks
 
 typedef struct eventHandler {
     SDL_Event event;
@@ -45,8 +45,21 @@ typedef struct windowModel {
     GLuint blockTextureID;
 } WindowModel;
 
+typedef struct chunk {
+    int x, z;
+    int chunkData;
+    int inRange;
+} Chunk;
+
+typedef struct world {
+    Chunk chunks[WORLD_SIZE][WORLD_SIZE];
+    ChunkMesh **visibleChunks;
+    int chunkCount;
+    int renderDistance;
+} World;
+
 void mainGameLoop();
-void render(unsigned int shaderProgram, WindowModel *wm, Chunk chunks[]);
+void render(unsigned int shaderProgram, WindowModel *wm, ChunkMesh chunks[], World world);
 void getWindowEvents(WindowModel *wm, Camera *cam);
 void toggleFullscreen(WindowModel *wm);
 Camera setupCamera();

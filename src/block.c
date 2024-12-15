@@ -86,8 +86,8 @@ Face newFace(float x, float y, float z, int faceID) {
     }
 }
 
-Chunk newChunk(float xPos, float yPos, float zPos) {
-    Chunk newChunk = {.x = xPos, .y = yPos, .z = zPos};
+ChunkMesh newChunk(float xPos, float yPos, float zPos) {
+    ChunkMesh newChunk = {.x = xPos, .y = yPos, .z = zPos};
 
     Vertex *allVertices = (Vertex*)malloc(sizeof(Vertex) * CHUNK_VOL *24);
     uint16_t *allIndices = (uint16_t*)malloc(sizeof(uint16_t) * CHUNK_VOL *36);
@@ -103,9 +103,9 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
         }
     }
 
-    newChunk.blocks[5][CHUNK_SIZE-1][5].type = AIR;
-    newChunk.blocks[5][CHUNK_SIZE-1][4].type = AIR;
-    newChunk.blocks[4][CHUNK_SIZE-1][5].type = AIR;
+    // newChunk.blocks[5][CHUNK_SIZE-1][5].type = AIR;
+    // newChunk.blocks[5][CHUNK_SIZE-1][4].type = AIR;
+    // newChunk.blocks[4][CHUNK_SIZE-1][5].type = AIR;
 
     for (int z = 0; z < CHUNK_SIZE; z++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {
@@ -177,7 +177,7 @@ Chunk newChunk(float xPos, float yPos, float zPos) {
     return newChunk;
 }
 
-void renderChunk(Chunk chunk, int mode) {
+void renderChunk(ChunkMesh chunk, int mode) {
     glBindVertexArray(chunk.VAO);
     glDrawElements(mode, chunk.indiceCount, GL_UNSIGNED_SHORT, 0);
     glBindVertexArray(0);

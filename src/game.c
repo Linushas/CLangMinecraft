@@ -34,10 +34,42 @@ void updateDebug(WindowModel *wm) {
 }
 
 void mainGameLoop(WindowModel *wm) {
-    Chunk *chunks = malloc(NR_OF_CHUNKS * sizeof(Chunk));
-    for(int x = 0; x < sqrt(NR_OF_CHUNKS); x++) {
-        for(int z = 0; z < sqrt(NR_OF_CHUNKS); z++) {
-            chunks[(x*(int)sqrt(NR_OF_CHUNKS)) + z] = newChunk(-(CHUNK_SIZE*sqrt(NR_OF_CHUNKS)/2) + x*CHUNK_SIZE, 0.0f, -(CHUNK_SIZE*sqrt(NR_OF_CHUNKS)/2) + z*CHUNK_SIZE);
+    World world;
+    int playerChunkX = (int)wm->cam->eye.x / 16;
+    int playerChunkZ = (int)wm->cam->eye.z / 16;
+
+    world.renderDistance = 3;
+    for(int x = 0; x < WORLD_SIZE; x++) {
+        for(int z = 0; z < WORLD_SIZE; z++) {
+            world.chunks[x][z].x = x - WORLD_SIZE/2;
+            world.chunks[x][z].z = z - WORLD_SIZE/2;
+            world.chunks[x][z].inRange = 0;
+        }
+    }
+
+    world.chunkCount = 0;
+    for(int x = 0; x < WORLD_SIZE; x++) {
+        for(int z = 0; z < WORLD_SIZE; z++) {
+            if(abs(world.chunks[x][z].x - playerChunkX) < world.renderDistance && 
+               abs(world.chunks[x][z].z - playerChunkZ) < world.renderDistance) {
+                world.chunkCount++;
+                world.chunks[x][z].inRange = 1;
+            }
+            else {
+                world.chunks[x][z].inRange = 0;
+            }
+        }
+    }
+    printf("chunks loaded: %d\n", world.chunkCount);
+    
+    int chunkIndex = 0;
+    ChunkMesh *chunks = malloc(world.chunkCount * sizeof(ChunkMesh));
+    for(int x = 0; x < WORLD_SIZE; x++) {
+        for(int z = 0; z < WORLD_SIZE; z++) {
+            if(world.chunks[x][z].inRange) {
+                chunks[chunkIndex] = newChunk((float)world.chunks[x][z].x*CHUNK_SIZE, 0.0f, (float)world.chunks[x][z].z*CHUNK_SIZE);
+                chunkIndex++;
+            }
         }
     }
 
@@ -60,29 +92,56 @@ void mainGameLoop(WindowModel *wm) {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &wm->cam->view.m[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &wm->cam->projection.m[0][0]);
 
+        playerChunkX = (int)wm->cam->eye.x / 16;
+        playerChunkZ = (int)wm->cam->eye.z / 16;
+        world.chunkCount = 0;
+        for(int x = 0; x < WORLD_SIZE; x++) {
+            for(int z = 0; z < WORLD_SIZE; z++) {
+                if(abs(world.chunks[x][z].x - playerChunkX) < world.renderDistance && 
+                   abs(world.chunks[x][z].z - playerChunkZ) < world.renderDistance) {
+                    world.chunkCount++;
+                    world.chunks[x][z].inRange = 1;
+                }
+                else {
+                    world.chunks[x][z].inRange = 0;
+                }
+            }
+        }
         
-        render(wm->shaderProgram, wm, chunks);
+        int chunkIndex = 0;
+        chunks = realloc(chunks, world.chunkCount * sizeof(ChunkMesh));
+        for(int x = 0; x < WORLD_SIZE; x++) {
+            for(int z = 0; z < WORLD_SIZE; z++) {
+                if(world.chunks[x][z].inRange) {
+                    chunks[chunkIndex] = newChunk((float)world.chunks[x][z].x*CHUNK_SIZE, 0.0f, (float)world.chunks[x][z].z*CHUNK_SIZE);
+                    chunkIndex++;
+                }
+            }
+        }
+        
+        render(wm->shaderProgram, wm, chunks, world);
         SDL_GL_SwapWindow(wm->win);
 
         updateDebug(wm);
-        
+
         glUseProgram(wm->shaderProgram);
     }
 
-    for(int i = 0; i < NR_OF_CHUNKS; i++) {
+    for(int i = 0; i < world.chunkCount; i++) {
         glDeleteVertexArrays(1, &chunks[i].VAO);
         glDeleteBuffers(1, &chunks[i].VBO);
         glDeleteBuffers(1, &chunks[i].EBO);
         glDeleteProgram(wm->shaderProgram);
     }
+    free(chunks);
 }
 
-void render(unsigned int shaderProgram, WindowModel *wm, Chunk chunks[])
+void render(unsigned int shaderProgram, WindowModel *wm, ChunkMesh chunks[], World world)
 {
     glClearColor(0.65f, 0.75f, 0.9f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(shaderProgram);
-    for(int i = 0; i < NR_OF_CHUNKS; i++) {
+    for(int i = 0; i < world.chunkCount; i++) {
         if(wm->eh->r)
             renderChunk(chunks[i], GL_TRIANGLES);
         else

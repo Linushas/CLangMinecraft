@@ -30,15 +30,15 @@ typedef struct block {
     uint8_t type;
 } Block;
 
-typedef struct chunk {
+typedef struct chunkMesh {
     float x, y, z;
     Block blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
     int indiceCount;
     unsigned int VAO, VBO, EBO;
-} Chunk;
+} ChunkMesh;
 
 Face newFace(float x, float y, float z, int faceID);
-Chunk newChunk(float x, float y, float z);
-void renderChunk(Chunk chunk, int mode);
+ChunkMesh newChunk(float x, float y, float z);
+void renderChunk(ChunkMesh chunk, int mode);
 
 #endif
