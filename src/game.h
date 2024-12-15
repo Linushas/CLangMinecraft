@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <GL/glew.h>
 #include "math3d.h"
 
@@ -26,8 +27,16 @@ typedef struct camera {
     float pitch, yaw;
 } Camera;
 
+typedef struct debugWindow {
+    SDL_Window *win;
+    SDL_Renderer *rend;
+    TTF_Font *font;
+    EventH *eh;
+} DebugWindow;
+
 typedef struct windowModel {
     SDL_Window *win;
+    DebugWindow *debug;
     SDL_GLContext glContext;
     EventH *eh;
     Camera *cam;

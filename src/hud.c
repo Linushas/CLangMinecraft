@@ -31,10 +31,10 @@ void renderHUD(WindowModel *wm, GLuint hudShaderProgram) {
 
     // Define rectangle vertices
     float rectVertices[] = {
-        50.0f, 50.0f,
-        250.0f, 50.0f,
-        250.0f, 80.0f,
-        50.0f, 80.0f,
+        (float)width/2.0f - 4.0f, (float)height/2.0f + 4.0f,
+        (float)width/2.0f + 4.0f, (float)height/2.0f + 4.0f,
+        (float)width/2.0f + 4.0f, (float)height/2.0f - 4.0f,
+        (float)width/2.0f - 4.0f, (float)height/2.0f - 4.0f,
     };
 
     // Use VAO/VBO for rectangle
@@ -49,11 +49,11 @@ void renderHUD(WindowModel *wm, GLuint hudShaderProgram) {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glUniform4f(glGetUniformLocation(hudShaderProgram, "color"), 1.0f, 0.0f, 0.0f, 1.0f);
+    glUniform4f(glGetUniformLocation(hudShaderProgram, "color"), 0.0f, 0.0f, 0.0f, 1.0f);
 
     // Draw the rectangle
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
 
     // Cleanup
     glBindVertexArray(0);

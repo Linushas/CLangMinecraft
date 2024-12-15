@@ -1,5 +1,37 @@
+#include <stdio.h>
 #include "game.h"
 #include "hud.h"
+
+void updateDebug(WindowModel *wm) {
+    SDL_SetRenderDrawColor(wm->debug->rend, 255, 255, 255, 255);
+    SDL_RenderClear(wm->debug->rend);
+
+    wm->debug->font = TTF_OpenFont("font/Roboto/Roboto-Light.ttf", 12);
+    SDL_Color black = {0, 0, 0, 255};
+
+    char string[60];
+    // block coords
+    sprintf(string, "x: %-10.2f, y:%-10.2f, z:%-10.2f", wm->cam->eye.x, wm->cam->eye.y, wm->cam->eye.z);
+    SDL_Surface *fontSurf = TTF_RenderText_Blended(wm->debug->font, string, black);
+    SDL_Texture* fontTexture = SDL_CreateTextureFromSurface(wm->debug->rend, fontSurf);
+
+    SDL_Rect font_rect = {5, 20, fontSurf->w, fontSurf->h};
+    SDL_FreeSurface(fontSurf);
+    SDL_RenderCopy(wm->debug->rend, fontTexture, NULL, &font_rect);
+
+    // chunk coords
+    sprintf(string, "Chunk: x: %-10.2f, z: %-10.2f", wm->cam->eye.x / 16, wm->cam->eye.z / 16);
+    fontSurf = TTF_RenderText_Blended(wm->debug->font, string, black);
+    fontTexture = SDL_CreateTextureFromSurface(wm->debug->rend, fontSurf);
+
+    SDL_Rect font_rect2 = {5, 40, fontSurf->w, fontSurf->h};
+    SDL_FreeSurface(fontSurf);
+    SDL_RenderCopy(wm->debug->rend, fontTexture, NULL, &font_rect2);
+
+
+    SDL_RenderPresent(wm->debug->rend);
+    SDL_DestroyTexture(fontTexture);
+}
 
 void mainGameLoop(WindowModel *wm) {
     Chunk *chunks = malloc(NR_OF_CHUNKS * sizeof(Chunk));
@@ -30,9 +62,11 @@ void mainGameLoop(WindowModel *wm) {
 
         
         render(wm->shaderProgram, wm, chunks);
-        renderHUD(wm, wm->hudShaderProgram); 
-        glUseProgram(wm->shaderProgram);
         SDL_GL_SwapWindow(wm->win);
+
+        updateDebug(wm);
+        
+        glUseProgram(wm->shaderProgram);
     }
 
     for(int i = 0; i < NR_OF_CHUNKS; i++) {
@@ -65,7 +99,25 @@ void getWindowEvents(WindowModel *wm, Camera *cam)
         switch (wm->eh->event.type)
         {
         case SDL_QUIT:
+            printf("Received SDL_QUIT event\n");
             wm->eh->running = 0;
+            break;
+        case SDL_WINDOWEVENT:
+            if (wm->eh->event.window.event == SDL_WINDOWEVENT_CLOSE){
+                if (SDL_GetWindowFromID(wm->eh->event.window.windowID) == wm->win){
+                    SDL_DestroyWindow(wm->win);
+                    wm->win = NULL;
+                    SDL_DestroyWindow(wm->debug->win);
+                    wm->debug->win = NULL;
+                }
+                else if (SDL_GetWindowFromID(wm->eh->event.window.windowID) == wm->debug->win){
+                    SDL_DestroyWindow(wm->debug->win);
+                    wm->debug->win = NULL;
+                }
+                if (wm->win == NULL && wm->debug->win == NULL){
+                    wm->eh->running = 0;
+                }
+            }
             break;
 
         case SDL_KEYDOWN:
@@ -97,8 +149,7 @@ void getWindowEvents(WindowModel *wm, Camera *cam)
             break;
 
         case SDL_MOUSEWHEEL:
-            // if (wm->eh->event.wheel.y > 0) eye->z -= 0.2f; // Zoom in
-            // else if (wm->eh->event.wheel.y < 0) eye->z += 0.2f; // Zoom out
+            ////
             break;
 
         case SDL_MOUSEMOTION:

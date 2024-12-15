@@ -6,13 +6,20 @@
 #include "hud.h"
 
 int initializeWindow(WindowModel *wm);
+int initializeDebugWindow(DebugWindow *debug);
 GLuint loadBlockTexures();
 
 int main(int argc, char *argv[])
 {   
     WindowModel wm;
-    if (!initializeWindow(&wm))
+    if(!initializeWindow(&wm))
         return -1;
+
+    DebugWindow debug;
+    if(!initializeDebugWindow(&debug))
+        return -1;
+    wm.debug = &debug;
+
     EventH eh = {.running = 1, .fullScreen = 0, .r = 0, .w = 0, .a = 0, .s = 0, .d = 0, .space = 0, .ctrl = 0};
     Camera cam = setupCamera();
     wm.eh = &eh;
@@ -30,6 +37,12 @@ int main(int argc, char *argv[])
 
     SDL_GL_DeleteContext(wm.glContext);
     SDL_DestroyWindow(wm.win);
+
+    SDL_DestroyRenderer(debug.rend);
+    SDL_DestroyWindow(debug.win);
+    IMG_Quit();
+    TTF_Quit();
+
     SDL_Quit();
     return 0;
 }
@@ -44,14 +57,20 @@ int initializeWindow(WindowModel *wm)
 
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
         printf("Unable to initialize SDL_Image: %s\n", IMG_GetError());
-        return 1;
+        return 0;
     }
+
+    if (TTF_Init() == -1) {
+        fprintf(stderr, "TTF_Init failed: %s\n", TTF_GetError());
+        exit(1);
+    }
+
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-    wm->win = SDL_CreateWindow("SDL2 3D Engine",
+    wm->win = SDL_CreateWindow("CMinecraft",
                                SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                SW, SH, SDL_WINDOW_OPENGL);
 
@@ -83,6 +102,21 @@ int initializeWindow(WindowModel *wm)
 
 
     printf("OpenGL version: %s\n", glGetString(GL_VERSION));
+    return 1;
+}
+
+int initializeDebugWindow(DebugWindow *debug)
+{
+    debug->win = SDL_CreateWindow("Debug",
+                               10, 30,
+                               200, 200, 0);
+
+    debug->rend = SDL_CreateRenderer(debug->win, -1, SDL_RENDERER_ACCELERATED);
+    if (!debug->rend) {
+        printf("Could not create renderer: %s\n", SDL_GetError());
+        return 0;
+    }
+
     return 1;
 }
 
