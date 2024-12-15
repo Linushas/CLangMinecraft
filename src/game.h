@@ -43,6 +43,7 @@ typedef struct windowModel {
     unsigned int shaderProgram;
     GLuint hudShaderProgram;
     GLuint blockTextureID;
+    float currentFps;
 } WindowModel;
 
 typedef struct chunk {
@@ -60,7 +61,7 @@ typedef struct world {
 
 void mainGameLoop();
 void render(unsigned int shaderProgram, WindowModel *wm, ChunkMesh chunks[], World world);
-void getWindowEvents(WindowModel *wm, Camera *cam);
+void getWindowEvents(WindowModel *wm, Camera *cam, double deltaTime);
 void toggleFullscreen(WindowModel *wm);
 Camera setupCamera();
 

@@ -28,9 +28,46 @@ void updateDebug(WindowModel *wm) {
     SDL_FreeSurface(fontSurf);
     SDL_RenderCopy(wm->debug->rend, fontTexture, NULL, &font_rect2);
 
+    // fps
+    sprintf(string, "fps: %.2f", wm->currentFps);
+    fontSurf = TTF_RenderText_Blended(wm->debug->font, string, black);
+    fontTexture = SDL_CreateTextureFromSurface(wm->debug->rend, fontSurf);
+
+    SDL_Rect font_rect3 = {5, 60, fontSurf->w, fontSurf->h};
+    SDL_FreeSurface(fontSurf);
+    SDL_RenderCopy(wm->debug->rend, fontTexture, NULL, &font_rect3);
+
+
 
     SDL_RenderPresent(wm->debug->rend);
     SDL_DestroyTexture(fontTexture);
+}
+
+void reloadChunks(int *playerChunkX, int *playerChunkZ, World *world, ChunkMesh *chunks) {
+    world->chunkCount = 0;
+    for(int x = 0; x < WORLD_SIZE; x++) {
+        for(int z = 0; z < WORLD_SIZE; z++) {
+            if(abs(world->chunks[x][z].x - *playerChunkX) < world->renderDistance && 
+               abs(world->chunks[x][z].z - *playerChunkZ) < world->renderDistance) {
+                world->chunkCount++;
+                world->chunks[x][z].inRange = 1;
+            }
+            else {
+                world->chunks[x][z].inRange = 0;
+            }
+        }
+    }
+    
+    int chunkIndex = 0;
+    chunks = realloc(chunks, world->chunkCount * sizeof(ChunkMesh));
+    for(int x = 0; x < WORLD_SIZE; x++) {
+        for(int z = 0; z < WORLD_SIZE; z++) {
+            if(world->chunks[x][z].inRange) {
+                chunks[chunkIndex] = newChunk((float)world->chunks[x][z].x*CHUNK_SIZE, 0.0f, (float)world->chunks[x][z].z*CHUNK_SIZE);
+                chunkIndex++;
+            }
+        }
+    }
 }
 
 void mainGameLoop(WindowModel *wm) {
@@ -38,7 +75,7 @@ void mainGameLoop(WindowModel *wm) {
     int playerChunkX = (int)wm->cam->eye.x / 16;
     int playerChunkZ = (int)wm->cam->eye.z / 16;
 
-    world.renderDistance = 3;
+    world.renderDistance = 8;
     for(int x = 0; x < WORLD_SIZE; x++) {
         for(int z = 0; z < WORLD_SIZE; z++) {
             world.chunks[x][z].x = x - WORLD_SIZE/2;
@@ -61,7 +98,6 @@ void mainGameLoop(WindowModel *wm) {
         }
     }
     printf("chunks loaded: %d\n", world.chunkCount);
-    
     int chunkIndex = 0;
     ChunkMesh *chunks = malloc(world.chunkCount * sizeof(ChunkMesh));
     for(int x = 0; x < WORLD_SIZE; x++) {
@@ -73,9 +109,22 @@ void mainGameLoop(WindowModel *wm) {
         }
     }
 
+
+    int oldChunkX = playerChunkX, oldChunkZ = playerChunkZ;
+
+    uint64_t NOW = SDL_GetPerformanceCounter();
+    uint64_t LAST = 0;
+    double deltaTime = 0;
+    float m_secondCounter;
+    float m_tempFps;
+    float fps;
     while (wm->eh->running)
     {
-        getWindowEvents(wm, wm->cam);
+        LAST = NOW;
+        NOW = SDL_GetPerformanceCounter();
+
+
+        getWindowEvents(wm, wm->cam, deltaTime);
         wm->cam->viewVec3 = subtractVec3d(wm->cam->target, wm->cam->eye);
         wm->cam->rightVec3 = crossProduct(wm->cam->viewVec3, wm->cam->up);
 
@@ -92,47 +141,43 @@ void mainGameLoop(WindowModel *wm) {
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &wm->cam->view.m[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &wm->cam->projection.m[0][0]);
 
+
+        oldChunkX = playerChunkX;
+        oldChunkZ = playerChunkZ;
         playerChunkX = (int)wm->cam->eye.x / 16;
         playerChunkZ = (int)wm->cam->eye.z / 16;
-        world.chunkCount = 0;
-        for(int x = 0; x < WORLD_SIZE; x++) {
-            for(int z = 0; z < WORLD_SIZE; z++) {
-                if(abs(world.chunks[x][z].x - playerChunkX) < world.renderDistance && 
-                   abs(world.chunks[x][z].z - playerChunkZ) < world.renderDistance) {
-                    world.chunkCount++;
-                    world.chunks[x][z].inRange = 1;
-                }
-                else {
-                    world.chunks[x][z].inRange = 0;
-                }
+        if(playerChunkX != oldChunkX || playerChunkZ != oldChunkZ) {
+            for(int i = 0; i < world.chunkCount; i++) {
+                glDeleteVertexArrays(1, &chunks[i].VAO);
+                glDeleteBuffers(1, &chunks[i].VBO);
+                glDeleteBuffers(1, &chunks[i].EBO);
+                glDeleteProgram(wm->shaderProgram);
             }
+            reloadChunks(&playerChunkX, &playerChunkZ, &world, chunks);
         }
         
-        int chunkIndex = 0;
-        chunks = realloc(chunks, world.chunkCount * sizeof(ChunkMesh));
-        for(int x = 0; x < WORLD_SIZE; x++) {
-            for(int z = 0; z < WORLD_SIZE; z++) {
-                if(world.chunks[x][z].inRange) {
-                    chunks[chunkIndex] = newChunk((float)world.chunks[x][z].x*CHUNK_SIZE, 0.0f, (float)world.chunks[x][z].z*CHUNK_SIZE);
-                    chunkIndex++;
-                }
-            }
-        }
+    
         
         render(wm->shaderProgram, wm, chunks, world);
         SDL_GL_SwapWindow(wm->win);
-
         updateDebug(wm);
 
-        glUseProgram(wm->shaderProgram);
+
+
+        deltaTime = (double)((NOW - LAST)*1000 / (double)SDL_GetPerformanceFrequency() );
+        if (m_secondCounter <= 1000) {
+            m_secondCounter += deltaTime;
+            m_tempFps++;
+        }
+        else 
+        {
+            fps = m_tempFps;
+            m_secondCounter = 0;
+            m_tempFps = 0;
+            wm->currentFps = fps;
+        }
     }
 
-    for(int i = 0; i < world.chunkCount; i++) {
-        glDeleteVertexArrays(1, &chunks[i].VAO);
-        glDeleteBuffers(1, &chunks[i].VBO);
-        glDeleteBuffers(1, &chunks[i].EBO);
-        glDeleteProgram(wm->shaderProgram);
-    }
     free(chunks);
 }
 
@@ -150,7 +195,7 @@ void render(unsigned int shaderProgram, WindowModel *wm, ChunkMesh chunks[], Wor
     glBindVertexArray(0);
 }
 
-void getWindowEvents(WindowModel *wm, Camera *cam)
+void getWindowEvents(WindowModel *wm, Camera *cam, double deltaTime)
 {
     wm->eh->mouse_dx = 0.0f, wm->eh->mouse_dy = 0.0f;
     while (SDL_PollEvent(&(wm->eh->event)))
@@ -218,7 +263,7 @@ void getWindowEvents(WindowModel *wm, Camera *cam)
         }
     }
 
-    float speed = 0.1f;
+    float speed = 10.0f * (deltaTime / 1000.0);
 
     if(wm->eh->w) {
         cam->eye.x += cam->viewVec3.x * speed;

@@ -12,7 +12,6 @@
 #define SW          SH*aspectRatio
 #define SH2         SH/2
 #define SW2         SW/2
-#define FPS         60  
 #define FOV         3.0f //4.0f
 #define sensitivity 0.01f
 
