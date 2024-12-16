@@ -118,18 +118,29 @@ void mainGameLoop(WindowModel *wm) {
         }
     }
     // Initialize chunk data
-    int height = 0;
+    int height = 0, heightChunk = 0;
     for(int x = 0; x < WORLD_SIZE; x++) {
         for(int z = 0; z < WORLD_SIZE; z++) {
             if (world.chunks[x] && world.chunks[x][z].chunkData) {
                 world.chunks[x][z].x = x - WORLD_SIZE/2;
                 world.chunks[x][z].z = z - WORLD_SIZE/2;
                 world.chunks[x][z].inRange = 0;
+                heightChunk = rand()%8;
                 for(int cx = 0; cx < CHUNK_SIZE; cx++) {
                     for(int cz = 0; cz < CHUNK_SIZE; cz++) {
-                        height = rand()%7;
+                        height = rand()%10;
+                        if(height > 4) height = rand()%10;
+                        if(height > 4) height = rand()%10;
+                        if(height > 8) height = rand()%4;
+                        if(height > 4) height = rand()%2;
+                        if(height > 2) height = rand()%2;
                         int cy;
-                        for(cy = 0; cy < (CHUNK_SIZE-8)+height; cy++) {
+                        for(cy = 0; cy < (CHUNK_SIZE-12)+height + heightChunk; cy++) {
+                            if (world.chunks[x][z].chunkData[cx] && world.chunks[x][z].chunkData[cx][cy]) {
+                                world.chunks[x][z].chunkData[cx][cy][cz] = STONE;
+                            }
+                        }
+                        for(cy; cy < (CHUNK_SIZE-11)+height + heightChunk; cy++) {
                             if (world.chunks[x][z].chunkData[cx] && world.chunks[x][z].chunkData[cx][cy]) {
                                 world.chunks[x][z].chunkData[cx][cy][cz] = GRASS;
                             }
@@ -221,7 +232,7 @@ void mainGameLoop(WindowModel *wm) {
             reloadChunks(&playerChunkX, &playerChunkZ, &world, chunks);
         }
         
-    
+
         
         render(wm->shaderProgram, wm, chunks, world);
         SDL_GL_SwapWindow(wm->win);
@@ -243,6 +254,7 @@ void mainGameLoop(WindowModel *wm) {
         }
     }
 
+    // CLEAN UP
     for (int x = 0; x < WORLD_SIZE; x++) {
         for (int z = 0; z < WORLD_SIZE; z++) {
             for (int cx = 0; cx < CHUNK_SIZE; cx++) {

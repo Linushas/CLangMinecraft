@@ -5,17 +5,33 @@
 #include "block.h"
 #include "game.h"
 
-Face newFace(float x, float y, float z, int faceID) {
+Face newFace(float x, float y, float z, int faceID, int blockType) {
     float size = BLOCK_SIZE;
-    float sideTexCoordX = (3 * 16) / 512.0f;
-    float sideTexCoordY = (1 * 16) / 256.0f;
-    float sideTexCoordX2 = sideTexCoordX + (16 / 512.0f);
-    float sideTexCoordY2 = sideTexCoordY - (16 / 256.0f);
+    float sideTexCoordX, sideTexCoordY, sideTexCoordX2, sideTexCoordY2, topTexCoordX, topTexCoordY, topTexCoordX2, topTexCoordY2;
+    
+    if(blockType == STONE) {
+        sideTexCoordX = (19 * 16) / 512.0f; 
+        sideTexCoordY = (1 * 16) / 256.0f; 
+        sideTexCoordX2 = sideTexCoordX + (16 / 512.0f);
+        sideTexCoordY2 = sideTexCoordY - (16 / 256.0f);
 
-    float topTexCoordX = (2 * 16) / 512.0f;
-    float topTexCoordY = (0 * 16) / 256.0f;
-    float topTexCoordX2 = topTexCoordX + (16 / 512.0f);
-    float topTexCoordY2 = topTexCoordY + (16 / 256.0f);
+        topTexCoordX = (19 * 16) / 512.0f; 
+        topTexCoordY = (0 * 16) / 256.0f; 
+        topTexCoordX2 = topTexCoordX + (16 / 512.0f);
+        topTexCoordY2 = topTexCoordY + (16 / 256.0f);
+    }
+    else if(blockType == GRASS) {
+        sideTexCoordX = (3 * 16) / 512.0f;
+        sideTexCoordY = (1 * 16) / 256.0f; 
+        sideTexCoordX2 = sideTexCoordX + (16 / 512.0f);
+        sideTexCoordY2 = sideTexCoordY - (16 / 256.0f);
+
+        topTexCoordX = (2 * 16) / 512.0f; 
+        topTexCoordY = (0 * 16) / 256.0f; 
+        topTexCoordX2 = topTexCoordX + (16 / 512.0f);
+        topTexCoordY2 = topTexCoordY + (16 / 256.0f);
+    }
+        
 
     switch(faceID) {
         case FRONT:
@@ -119,7 +135,7 @@ ChunkMesh newChunk(World *world, float xPos, float yPos, float zPos, int chunkX,
                         float blockX = xPos + x * BLOCK_SIZE;
                         float blockY = yPos + y * BLOCK_SIZE;
                         float blockZ = zPos + z * BLOCK_SIZE;
-                        Face current = newFace(blockX, blockY, blockZ, faceIndex);
+                        Face current = newFace(blockX, blockY, blockZ, faceIndex, world->chunks[chunkX][chunkZ].chunkData[x][y][z]);
 
                         memcpy(&allVertices[vertexOffset], current.vertices, sizeof(Vertex) * 4);
                         for (int i = 0; i < 6; i++) {

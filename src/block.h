@@ -34,7 +34,7 @@ typedef struct chunkMesh {
 
 typedef struct world World;
 
-Face newFace(float x, float y, float z, int faceID);
+Face newFace(float x, float y, float z, int faceID, int blockType);
 ChunkMesh newChunk(World *world, float xPos, float yPos, float zPos, int chunkX, int chunkZ);
 void renderChunk(ChunkMesh chunk, int mode);
 
