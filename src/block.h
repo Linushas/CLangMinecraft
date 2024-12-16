@@ -26,13 +26,8 @@ typedef struct face {
     uint8_t indices[6];
 } Face;
 
-typedef struct block {
-    uint8_t type;
-} Block;
-
 typedef struct chunkMesh {
     float x, y, z;
-    Block blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
     int indiceCount;
     unsigned int VAO, VBO, EBO;
 } ChunkMesh;

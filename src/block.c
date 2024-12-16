@@ -99,31 +99,23 @@ ChunkMesh newChunk(World *world, float xPos, float yPos, float zPos, int chunkX,
     for (int z = 0; z < CHUNK_SIZE; z++) {
         for (int y = 0; y < CHUNK_SIZE; y++) {
             for (int x = 0; x < CHUNK_SIZE; x++) {
-                newChunk.blocks[x][y][z].type = world->chunks[chunkX][chunkZ].chunkData[x][y][z];
-            }
-        }
-    }
-
-    for (int z = 0; z < CHUNK_SIZE; z++) {
-        for (int y = 0; y < CHUNK_SIZE; y++) {
-            for (int x = 0; x < CHUNK_SIZE; x++) {
                 int visibleFaces[6] = {1,1,1,1,1,1}; //front back left right top bottom
 
-                if (z < CHUNK_SIZE - 1 && newChunk.blocks[x][y][z + 1].type != AIR)
+                if (z < CHUNK_SIZE - 1 && world->chunks[chunkX][chunkZ].chunkData[x][y][z+1] != AIR)
                     visibleFaces[0] = 0; 
-                if (z > 0 && newChunk.blocks[x][y][z - 1].type != AIR)
+                if (z > 0 && world->chunks[chunkX][chunkZ].chunkData[x][y][z-1] != AIR)
                     visibleFaces[1] = 0; 
-                if (x > 0 && newChunk.blocks[x - 1][y][z].type != AIR)
+                if (x > 0 && world->chunks[chunkX][chunkZ].chunkData[x-1][y][z] != AIR)
                     visibleFaces[2] = 0;
-                if (x < CHUNK_SIZE - 1 && newChunk.blocks[x + 1][y][z].type != AIR)
+                if (x < CHUNK_SIZE - 1 && world->chunks[chunkX][chunkZ].chunkData[x+1][y][z] != AIR)
                     visibleFaces[3] = 0;
-                if (y < CHUNK_SIZE - 1 && newChunk.blocks[x][y + 1][z].type != AIR)
+                if (y < CHUNK_SIZE - 1 && world->chunks[chunkX][chunkZ].chunkData[x][y+1][z] != AIR)
                     visibleFaces[4] = 0; 
-                if (y > 0 && newChunk.blocks[x][y - 1][z].type != AIR)
+                if (y > 0 && world->chunks[chunkX][chunkZ].chunkData[x][y-1][z] != AIR)
                     visibleFaces[5] = 0;
 
                 for(int faceIndex = 0; faceIndex < 6; faceIndex++) {
-                    if(visibleFaces[faceIndex] && newChunk.blocks[x][y][z].type != AIR) {
+                    if(visibleFaces[faceIndex] && world->chunks[chunkX][chunkZ].chunkData[x][y][z] != AIR) {
                         float blockX = xPos + x * BLOCK_SIZE;
                         float blockY = yPos + y * BLOCK_SIZE;
                         float blockZ = zPos + z * BLOCK_SIZE;
