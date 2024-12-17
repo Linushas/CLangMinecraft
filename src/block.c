@@ -5,6 +5,89 @@
 #include "block.h"
 #include "game.h"
 
+void selectedCube(RayHit hit) {
+    if(!hit.hit) return;
+
+    float size = 1.0f;
+    float x = (float)hit.blockX, y = (float)hit.blockY, z = (float)hit.blockZ;
+
+    CubeMesh cube = {
+        .vertices = {
+            { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f,      0.0f, 1.0f   },
+            { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f,      1.0f, 1.0f   },
+            { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f,      1.0f, 0.0f   },
+            { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, 0.0f, 1.0f,      0.0f, 0.0f   },
+
+            { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f,      0.0f, 1.0f   },
+            { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f,      1.0f, 1.0f   },
+            { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f,      1.0f, 0.0f   },
+            { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, 0.0f, -1.0f,      0.0f, 0.0f   },
+
+            { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f,      0.0f, 1.0f   },
+            { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f,      1.0f, 1.0f   },
+            { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    -1.0f, 0.0f, 0.0f,      1.0f, 0.0f   },
+            { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    -1.0f, 0.0f, 0.0f,      0.0f, 0.0f   },
+
+            { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f,      0.0f, 1.0f   },
+            { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f,      1.0f, 1.0f   },
+            { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    1.0f, 0.0f, 0.0f,      1.0f, 0.0f   },
+            { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    1.0f, 0.0f, 0.0f,      0.0f, 0.0f   },
+
+            { x + 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f,      0.0f, 1.0f   },
+            { x - 0.5f * size, y + 0.5f * size, z + 0.5f * size,    0.0f, 1.0f, 0.0f,      1.0f, 1.0f   },
+            { x - 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f,      1.0f, 0.0f   },
+            { x + 0.5f * size, y + 0.5f * size, z - 0.5f * size,    0.0f, 1.0f, 0.0f,      0.0f, 0.0f   },
+
+            { x + 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f,      0.0f, 1.0f  },
+            { x - 0.5f * size, y - 0.5f * size, z + 0.5f * size,    0.0f, -1.0f, 0.0f,      1.0f, 1.0f  },
+            { x - 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f,      1.0f, 0.0f  },
+            { x + 0.5f * size, y - 0.5f * size, z - 0.5f * size,    0.0f, -1.0f, 0.0f,      0.0f, 0.0f  }
+        },
+        .indices = {
+            0, 1, 2, 2, 3, 0,
+            4, 5, 6, 6, 7, 4,
+            8, 9, 10, 10, 11, 8,
+            12, 13, 14, 14, 15, 12,
+            16, 17, 18, 18, 19, 16,
+            20, 21, 22, 22, 23, 20
+        }
+    };
+    cube.indiceCount = 36;
+
+    glDeleteVertexArrays(1, &cube.VAO);
+    glDeleteBuffers(1, &cube.VBO);
+    glDeleteBuffers(1, &cube.EBO);
+
+    glGenVertexArrays(1, &cube.VAO);
+    glGenBuffers(1, &cube.VBO);
+    glGenBuffers(1, &cube.EBO);
+
+    glBindVertexArray(cube.VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, cube.VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube.vertices), cube.vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cube.EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube.indices), cube.indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // render
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBindVertexArray(cube.VAO);
+    glDrawElements(GL_TRIANGLES, cube.indiceCount, GL_UNSIGNED_SHORT, 0);
+    glBindVertexArray(0);
+}
+
 Face newFace(float x, float y, float z, int faceID, int blockType) {
     float size = BLOCK_SIZE;
     float sideTexCoordX, sideTexCoordY, sideTexCoordX2, sideTexCoordY2, topTexCoordX, topTexCoordY, topTexCoordX2, topTexCoordY2;
@@ -28,6 +111,28 @@ Face newFace(float x, float y, float z, int faceID, int blockType) {
 
         topTexCoordX = (2 * 16) / 512.0f; 
         topTexCoordY = (0 * 16) / 256.0f; 
+        topTexCoordX2 = topTexCoordX + (16 / 512.0f);
+        topTexCoordY2 = topTexCoordY + (16 / 256.0f);
+    }
+    else if(blockType == DIRT) {
+        sideTexCoordX = (11 * 16) / 512.0f;
+        sideTexCoordY = (2 * 16) / 256.0f; 
+        sideTexCoordX2 = sideTexCoordX + (16 / 512.0f);
+        sideTexCoordY2 = sideTexCoordY - (16 / 256.0f);
+
+        topTexCoordX = (11 * 16) / 512.0f; 
+        topTexCoordY = (2 * 16) / 256.0f; 
+        topTexCoordX2 = topTexCoordX + (16 / 512.0f);
+        topTexCoordY2 = topTexCoordY + (16 / 256.0f);
+    }
+    else if(blockType == TNT) {
+        sideTexCoordX = (23 * 16) / 512.0f;
+        sideTexCoordY = (2 * 16) / 256.0f; 
+        sideTexCoordX2 = sideTexCoordX + (16 / 512.0f);
+        sideTexCoordY2 = sideTexCoordY - (16 / 256.0f);
+
+        topTexCoordX = (24 * 16) / 512.0f; 
+        topTexCoordY = (1 * 16) / 256.0f; 
         topTexCoordX2 = topTexCoordX + (16 / 512.0f);
         topTexCoordY2 = topTexCoordY + (16 / 256.0f);
     }
@@ -129,6 +234,7 @@ ChunkMesh newChunk(World *world, float xPos, float yPos, float zPos, int chunkX,
                     visibleFaces[4] = 0; 
                 if (y > 0 && world->chunks[chunkX][chunkZ].chunkData[x][y-1][z] != AIR)
                     visibleFaces[5] = 0;
+
 
                 for(int faceIndex = 0; faceIndex < 6; faceIndex++) {
                     if(visibleFaces[faceIndex] && world->chunks[chunkX][chunkZ].chunkData[x][y][z] != AIR) {

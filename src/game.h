@@ -34,6 +34,12 @@ typedef struct debugWindow {
     EventH *eh;
 } DebugWindow;
 
+typedef struct RayHit {
+    int blockX, blockY, blockZ;
+    int face; // 0: front, 1: back, 2: left, 3: right, 4: top, 5: bottom
+    int hit;  // 1 if a block is hit, 0 otherwise
+} RayHit;
+
 typedef struct windowModel {
     SDL_Window *win;
     DebugWindow *debug;
@@ -44,6 +50,7 @@ typedef struct windowModel {
     GLuint hudShaderProgram;
     GLuint blockTextureID;
     float currentFps;
+    RayHit *rayHit;
 } WindowModel;
 
 typedef struct chunk {

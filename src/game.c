@@ -4,6 +4,61 @@
 #include "game.h"
 #include "hud.h"
 
+RayHit raycast(World *world, Vertex eye, Vertex viewVec, float maxDistance) {
+    RayHit hit = {0, 0, 0, -1, 0};
+    
+    float stepSize = 0.01f; // Adjust for precision and performance
+    Vertex rayDir = normalize(viewVec);
+    
+    Vertex current = eye;
+    for (float t = 0; t < maxDistance*10; t += stepSize) {
+        int blockX = (int)floor(current.x);
+        int blockY = (int)floor(current.y);
+        int blockZ = (int)floor(current.z);
+        
+        // Ensure coordinates are within bounds
+        if (blockX < 0 || blockX >= WORLD_SIZE * CHUNK_SIZE ||
+            blockY < 0 || blockY >= CHUNK_SIZE ||
+            blockZ < 0 || blockZ >= WORLD_SIZE * CHUNK_SIZE) {
+            break;
+        }
+
+        // Determine chunk and local block coordinates
+        int chunkX = blockX / CHUNK_SIZE;
+        int chunkZ = blockZ / CHUNK_SIZE;
+        int localX = blockX % CHUNK_SIZE;
+        int localY = blockY;
+        int localZ = blockZ % CHUNK_SIZE;
+
+        // Check if block is not AIR
+        if (world->chunks[chunkX][chunkZ].chunkData[localX][localY][localZ] != AIR) {
+            hit.blockX = blockX;
+            hit.blockY = blockY;
+            hit.blockZ = blockZ;
+            hit.hit = 1;
+
+            // Determine face
+            Vertex diff = subtractVec3d(current, (Vertex){blockX + 0.5f, blockY + 0.5f, blockZ + 0.5f});
+            if (fabs(diff.x) > fabs(diff.y) && fabs(diff.x) > fabs(diff.z)) {
+                hit.face = (diff.x > 0) ? 2 : 3; // Left or Right
+            } else if (fabs(diff.y) > fabs(diff.x) && fabs(diff.y) > fabs(diff.z)) {
+                hit.face = (diff.y > 0) ? 5 : 4; // Bottom or Top
+            } else {
+                hit.face = (diff.z > 0) ? 1 : 0; // Back or Front
+            }
+
+            break;
+        }
+
+        // Advance the ray
+        current.x += rayDir.x * stepSize;
+        current.y += rayDir.y * stepSize;
+        current.z += rayDir.z * stepSize;
+    }
+    return hit;
+}
+
+
 void updateDebug(WindowModel *wm) {
     SDL_SetRenderDrawColor(wm->debug->rend, 255, 255, 255, 255);
     SDL_RenderClear(wm->debug->rend);
@@ -39,13 +94,21 @@ void updateDebug(WindowModel *wm) {
     SDL_FreeSurface(fontSurf);
     SDL_RenderCopy(wm->debug->rend, fontTexture, NULL, &font_rect3);
 
+    // looking at
+    sprintf(string, "sel: x: %-10d, y:%-10d, z:%-10d", wm->rayHit->blockX, wm->rayHit->blockY, wm->rayHit->blockZ);
+    fontSurf = TTF_RenderText_Blended(wm->debug->font, string, black);
+    fontTexture = SDL_CreateTextureFromSurface(wm->debug->rend, fontSurf);
+
+    SDL_Rect font_rect4 = {5, 80, fontSurf->w, fontSurf->h};
+    SDL_FreeSurface(fontSurf);
+    SDL_RenderCopy(wm->debug->rend, fontTexture, NULL, &font_rect4);
 
 
-    SDL_RenderPresent(wm->debug->rend);
+    SDL_RenderPresent(wm->debug->rend); 
     SDL_DestroyTexture(fontTexture);
 }
 
-void reloadChunks(int *playerChunkX, int *playerChunkZ, World *world, ChunkMesh *chunks) {
+void reloadChunks(int *playerChunkX, int *playerChunkZ, World *world, ChunkMesh *chunks, RayHit hit) {
     world->chunkCount = 0;
     for(int x = 0; x < WORLD_SIZE; x++) {
         for(int z = 0; z < WORLD_SIZE; z++) {
@@ -126,21 +189,32 @@ void mainGameLoop(WindowModel *wm) {
                 world.chunks[x][z].z = z - WORLD_SIZE/2;
                 world.chunks[x][z].inRange = 0;
                 heightChunk = rand()%8;
+                if(heightChunk+z < 4) heightChunk = heightChunk + 5;
                 for(int cx = 0; cx < CHUNK_SIZE; cx++) {
+                    if(cx % 6 == 0)
+                        if(heightChunk+z < 4)
+                            heightChunk++;
+                        else
+                            heightChunk--;
                     for(int cz = 0; cz < CHUNK_SIZE; cz++) {
                         height = rand()%10;
                         if(height > 4) height = rand()%10;
                         if(height > 4) height = rand()%10;
                         if(height > 8) height = rand()%4;
                         if(height > 4) height = rand()%2;
-                        if(height > 2) height = rand()%2;
+                        if(height > 1) height = rand()%1;
                         int cy;
-                        for(cy = 0; cy < (CHUNK_SIZE-12)+height + heightChunk; cy++) {
+                        for(cy = 0; cy < (CHUNK_SIZE-11)+height + heightChunk; cy++) {
                             if (world.chunks[x][z].chunkData[cx] && world.chunks[x][z].chunkData[cx][cy]) {
                                 world.chunks[x][z].chunkData[cx][cy][cz] = STONE;
                             }
                         }
-                        for(cy; cy < (CHUNK_SIZE-11)+height + heightChunk; cy++) {
+                        for(cy; cy < (CHUNK_SIZE-10)+height + heightChunk; cy++) {
+                            if (world.chunks[x][z].chunkData[cx] && world.chunks[x][z].chunkData[cx][cy]) {
+                                world.chunks[x][z].chunkData[cx][cy][cz] = DIRT;
+                            }
+                        }
+                        for(cy; cy < (CHUNK_SIZE-9)+height + heightChunk; cy++) {
                             if (world.chunks[x][z].chunkData[cx] && world.chunks[x][z].chunkData[cx][cy]) {
                                 world.chunks[x][z].chunkData[cx][cy][cz] = GRASS;
                             }
@@ -155,8 +229,6 @@ void mainGameLoop(WindowModel *wm) {
             }
         }
     }
-
-
 
     world.renderDistance = 8;
 
@@ -185,6 +257,8 @@ void mainGameLoop(WindowModel *wm) {
         }
     }
 
+    RayHit hit = raycast(&world, wm->cam->eye, wm->cam->viewVec3, 50.0f);
+    wm->rayHit = &hit;
 
     int oldChunkX = playerChunkX, oldChunkZ = playerChunkZ;
 
@@ -195,7 +269,7 @@ void mainGameLoop(WindowModel *wm) {
     float m_tempFps;
     float fps;
     while (wm->eh->running)
-    {
+    {   
         LAST = NOW;
         NOW = SDL_GetPerformanceCounter();
 
@@ -227,16 +301,27 @@ void mainGameLoop(WindowModel *wm) {
                 glDeleteVertexArrays(1, &chunks[i].VAO);
                 glDeleteBuffers(1, &chunks[i].VBO);
                 glDeleteBuffers(1, &chunks[i].EBO);
-                glDeleteProgram(wm->shaderProgram);
             }
-            reloadChunks(&playerChunkX, &playerChunkZ, &world, chunks);
+            reloadChunks(&playerChunkX, &playerChunkZ, &world, chunks, hit);
         }
-        
+
 
         
+        hit = raycast(&world, wm->cam->eye, wm->cam->viewVec3, 50.0f);
+
+        glClearColor(0.65f, 0.75f, 0.9f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(wm->shaderProgram);
+        
         render(wm->shaderProgram, wm, chunks, world);
+        glDisable(GL_DEPTH_TEST);
+        selectedCube(hit);
+        glEnable(GL_DEPTH_TEST);
+        glBindVertexArray(0);
+        
         SDL_GL_SwapWindow(wm->win);
-        updateDebug(wm);
+        if(!wm->eh->r)
+            updateDebug(wm);
 
 
 
@@ -269,20 +354,17 @@ void mainGameLoop(WindowModel *wm) {
     }
     free(world.chunks);
     free(chunks);
+    glDeleteProgram(wm->shaderProgram);
 }
 
 void render(unsigned int shaderProgram, WindowModel *wm, ChunkMesh chunks[], World world)
 {
-    glClearColor(0.65f, 0.75f, 0.9f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(shaderProgram);
     for(int i = 0; i < world.chunkCount; i++) {
         if(wm->eh->r)
             renderChunk(chunks[i], GL_TRIANGLES);
         else
             renderChunk(chunks[i], GL_LINES);
     }
-    glBindVertexArray(0);
 }
 
 void getWindowEvents(WindowModel *wm, Camera *cam, double deltaTime)
